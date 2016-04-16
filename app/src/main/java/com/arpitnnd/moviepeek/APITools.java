@@ -56,9 +56,9 @@ public class APITools {
         try {
             String urlString;
             if (sortByPop) {
-                urlString = "http://api.themoviedb.org/3/discover/movie?sort_by=popularity.desc&api_key=" + API_KEY;
+                urlString = "http://api.themoviedb.org/3/movie/popular?api_key=" + API_KEY;
             } else {
-                urlString = "http://api.themoviedb.org/3/discover/movie?sort_by=vote_average.desc&vote_count.gte=500&api_key=" + API_KEY;
+                urlString = "http://api.themoviedb.org/3/movie/top_rated?api_key=" + API_KEY;
             }
             URL url = new URL(urlString);
             urlConnection = (HttpURLConnection) url.openConnection();
