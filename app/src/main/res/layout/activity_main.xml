@@ -30,16 +30,19 @@
         android:id="@+id/content_frame"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="8dp"
+        android:paddingLeft="@dimen/gridview_padding"
+        android:paddingRight="@dimen/gridview_padding"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <GridView
             android:id="@+id/gridView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:columnWidth="150dp"
+            android:clipToPadding="false"
             android:horizontalSpacing="4dp"
             android:numColumns="auto_fit"
+            android:paddingBottom="@dimen/gridview_padding"
+            android:paddingTop="@dimen/gridview_padding"
             android:verticalSpacing="4dp" />
 
     </FrameLayout>
