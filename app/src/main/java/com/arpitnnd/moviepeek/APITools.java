@@ -30,7 +30,7 @@ public class APITools {
         JSONArray moviesArray = new JSONObject(moviesJSON).getJSONArray("results");
 
         MovieDetails movieDetails = new MovieDetails();
-
+        movieDetails.id = moviesArray.getJSONObject(position).getString("id");
         movieDetails.movieTitle = moviesArray.getJSONObject(position).getString("original_title");
         movieDetails.releaseDate = moviesArray.getJSONObject(position).getString("release_date");
         movieDetails.posterPath = moviesArray.getJSONObject(position).getString("poster_path");
@@ -51,7 +51,6 @@ public class APITools {
         HttpURLConnection urlConnection = null;
         BufferedReader reader = null;
         StringBuilder buffer = new StringBuilder();
-
 
         try {
             String urlString;
