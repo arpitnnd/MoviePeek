@@ -15,6 +15,8 @@ import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.Toast;
 
+import com.arpitnnd.moviepeek.adapters.GridViewAdapter;
+
 import org.json.JSONException;
 
 import java.util.ArrayList;
@@ -127,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(ArrayList<String> result) {
             if (result != null) {
-                ImageAdapter adapter = new ImageAdapter(getApplicationContext(), result);
+                GridViewAdapter adapter = new GridViewAdapter(getApplicationContext(), result);
                 gridView.setAdapter(adapter);
             }
         }

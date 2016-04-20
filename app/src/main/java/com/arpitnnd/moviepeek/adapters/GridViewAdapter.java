@@ -1,4 +1,4 @@
-package com.arpitnnd.moviepeek;
+package com.arpitnnd.moviepeek.adapters;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
@@ -8,15 +8,16 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 
+import com.arpitnnd.moviepeek.R;
 import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
 
-public class ImageAdapter extends BaseAdapter {
+public class GridViewAdapter extends BaseAdapter {
     private Context mContext;
     private ArrayList<String> paths;
 
-    public ImageAdapter(Context c, ArrayList<String> paths) {
+    public GridViewAdapter(Context c, ArrayList<String> paths) {
         mContext = c;
         this.paths = paths;
     }
@@ -47,7 +48,7 @@ public class ImageAdapter extends BaseAdapter {
         imageView.setAdjustViewBounds(true);
 
         Drawable d = ContextCompat.getDrawable(mContext, R.drawable.loading);
-        Glide.with(mContext).load("http://image.tmdb.org/t/p/w185/" + paths.get(position)).placeholder(d).into(imageView);
+        Glide.with(mContext).load("http://image.tmdb.org/t/p/w342/" + paths.get(position)).placeholder(d).into(imageView);
         return imageView;
     }
 }
