@@ -17,6 +17,7 @@ import android.widget.TextView;
 
 import com.arpitnnd.moviepeek.adapters.ReviewAdapter;
 import com.arpitnnd.moviepeek.adapters.TrailerAdapter;
+import com.arpitnnd.moviepeek.data.ExtraData;
 import com.arpitnnd.moviepeek.data.MovieDetails;
 import com.arpitnnd.moviepeek.data.Review;
 import com.arpitnnd.moviepeek.data.Trailer;
@@ -44,8 +45,7 @@ public class DetailsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_details);
         position = getIntent().getIntExtra("position", 0);
-        new TrailerLoadTask().execute();
-        new ReviewLoadTask().execute();
+        new ExtraDataFetchTask().execute();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -121,47 +121,27 @@ public class DetailsActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public class TrailerLoadTask extends AsyncTask<Void, Void, ArrayList<Trailer>> {
+    public class ExtraDataFetchTask extends AsyncTask<Void, Void, ExtraData> {
 
         @Override
-        protected ArrayList<Trailer> doInBackground(Void... params) {
-            ArrayList<Trailer> trailers = null;
+        protected ExtraData doInBackground(Void... params) {
+            ExtraData extraData = new ExtraData();
 
             try {
-                trailers = MainActivity.api.getTrailers(position);
+                extraData.setTrailers(MainActivity.api.getTrailers(position));
+                extraData.setReviews(MainActivity.api.getReviews(position));
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            return trailers;
+            return extraData;
         }
 
         @Override
-        protected void onPostExecute(ArrayList<Trailer> result) {
+        protected void onPostExecute(ExtraData result) {
             if (result != null) {
-                trailers = result;
-                mTrailerAdapter.swap(result);
-            }
-        }
-    }
-
-    public class ReviewLoadTask extends AsyncTask<Void, Void, ArrayList<Review>> {
-
-        @Override
-        protected ArrayList<Review> doInBackground(Void... params) {
-            ArrayList<Review> reviews = null;
-
-            try {
-                reviews = MainActivity.api.getReviews(position);
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            return reviews;
-        }
-
-        @Override
-        protected void onPostExecute(ArrayList<Review> result) {
-            if (result != null) {
-                mReviewAdapter.swap(result);
+                trailers = result.getTrailers();
+                mTrailerAdapter.swap(trailers);
+                mReviewAdapter.swap(result.getReviews());
             }
         }
     }

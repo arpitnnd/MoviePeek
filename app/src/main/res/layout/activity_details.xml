@@ -94,7 +94,7 @@
                                 android:layout_marginBottom="32dp"
                                 android:text="Large Text"
                                 android:textAppearance="?android:attr/textAppearanceMedium"
-                                android:textSize="24sp" />
+                                android:textSize="20sp" />
 
                             <TextView
                                 android:id="@+id/date_label"
