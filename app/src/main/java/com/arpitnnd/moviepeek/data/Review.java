@@ -1,5 +1,8 @@
 package com.arpitnnd.moviepeek.data;
 
+import org.parceler.Parcel;
+
+@Parcel
 public class Review {
 
     private String author, content;

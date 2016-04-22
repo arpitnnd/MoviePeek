@@ -23,18 +23,15 @@ import java.util.ArrayList;
 public class APITools {
 
     private static String API_KEY = BuildConfig.API_KEY; // TODO: Replace value with your API key.
-    private String moviesJSON;
     private Context context;
-    private JSONArray moviesArray;
 
     APITools(Context context) {
         this.context = context;
     }
 
     public ArrayList<String> getPosterPaths(boolean sortByPop) throws JSONException {
-        if (isNetworkAvailable())
-            moviesJSON = getMoviesJSON(sortByPop);
-        moviesArray = new JSONObject(moviesJSON).getJSONArray("results");
+        String moviesJSON = getMoviesJSON(sortByPop);
+        JSONArray moviesArray = new JSONObject(moviesJSON).getJSONArray("results");
         ArrayList<String> posterPaths = new ArrayList<>();
 
         for (int i = 0; i < moviesArray.length(); i++)
@@ -42,27 +39,33 @@ public class APITools {
         return posterPaths;
     }
 
-    public MovieDetails getMovieDetails(int position) throws JSONException {
-        MovieDetails movieDetails = new MovieDetails();
+    public MovieDetails getMovieDetails(boolean sortByPop, int position) throws JSONException {
+        String moviesJSON = getMoviesJSON(sortByPop);
+        JSONArray moviesArray = new JSONObject(moviesJSON).getJSONArray("results");
+        MovieDetails movie = new MovieDetails();
 
-        movieDetails.setMovieTitle(moviesArray.getJSONObject(position).getString("original_title"));
-        movieDetails.setReleaseDate(moviesArray.getJSONObject(position).getString("release_date"));
-        movieDetails.setBackdropPath(moviesArray.getJSONObject(position).getString("backdrop_path"));
-        movieDetails.setPosterPath(moviesArray.getJSONObject(position).getString("poster_path"));
-        movieDetails.setVoteAverage(moviesArray.getJSONObject(position).getString("vote_average"));
-        movieDetails.setPlot(moviesArray.getJSONObject(position).getString("overview"));
-        return movieDetails;
+        movie.setMovieId(moviesArray.getJSONObject(position).getString("id"));
+        movie.setMovieTitle(moviesArray.getJSONObject(position).getString("original_title"));
+        movie.setReleaseDate(moviesArray.getJSONObject(position).getString("release_date"));
+        movie.setBackdropPath(moviesArray.getJSONObject(position).getString("backdrop_path"));
+        movie.setPosterPath(moviesArray.getJSONObject(position).getString("poster_path"));
+        movie.setVoteAverage(moviesArray.getJSONObject(position).getString("vote_average"));
+        movie.setPlot(moviesArray.getJSONObject(position).getString("overview"));
+        movie.setTrailers(getTrailers(movie.getMovieId()));
+        movie.setReviews(getReviews(movie.getMovieId()));
+        return movie;
     }
 
-    public ArrayList<Trailer> getTrailers(int position) throws JSONException {
-        String movieUrlString = "http://api.themoviedb.org/3/movie/" + moviesArray.getJSONObject(position).getString("id");
-        JSONArray trailerArray = new JSONObject(getJSON(movieUrlString + "/videos?api_key=" + API_KEY)).getJSONArray("results");
+    public ArrayList<Trailer> getTrailers(String id) throws JSONException {
+        JSONArray trailerArray = new JSONObject(getJSON(
+                "http://api.themoviedb.org/3/movie/" + id + "/videos?api_key=" + API_KEY))
+                .getJSONArray("results");
         ArrayList<Trailer> trailers = new ArrayList<>();
 
         for (int i = 0; i < trailerArray.length(); i++) {
             if (trailerArray.getJSONObject(i).getString("site").equals("YouTube")) {
                 Trailer trailer = new Trailer();
-                trailer.setTName(trailerArray.getJSONObject(i).getString("name"));
+                trailer.setTrailerName(trailerArray.getJSONObject(i).getString("name"));
                 trailer.setKey(trailerArray.getJSONObject(i).getString("key"));
                 trailers.add(trailer);
             }
@@ -70,9 +73,10 @@ public class APITools {
         return trailers;
     }
 
-    public ArrayList<Review> getReviews(int position) throws JSONException {
-        String movieUrlString = "http://api.themoviedb.org/3/movie/" + moviesArray.getJSONObject(position).getString("id");
-        JSONArray reviewArray = new JSONObject(getJSON(movieUrlString + "/reviews?api_key=" + API_KEY)).getJSONArray("results");
+    public ArrayList<Review> getReviews(String id) throws JSONException {
+        JSONArray reviewArray = new JSONObject(getJSON(
+                "http://api.themoviedb.org/3/movie/" + id + "/reviews?api_key=" + API_KEY))
+                .getJSONArray("results");
         ArrayList<Review> reviews = new ArrayList<>();
 
         for (int i = 0; i < reviewArray.length(); i++) {

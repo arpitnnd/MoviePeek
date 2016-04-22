@@ -31,7 +31,7 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.ViewHold
     @Override
     public void onBindViewHolder(final ViewHolder holder, final int position) {
         //Thumbnail not yet implemented
-        holder.mTextViewTitle.setText(mDataset.get(position).getTName());
+        holder.mTextViewTitle.setText(mDataset.get(position).getTrailerName());
     }
 
     @Override

@@ -1,8 +1,23 @@
 package com.arpitnnd.moviepeek.data;
 
+import org.parceler.Parcel;
+
+import java.util.ArrayList;
+
+@Parcel
 public class MovieDetails {
 
-    private String movieTitle, releaseDate, posterPath, backdropPath, voteAverage, plot;
+    public String movieId, movieTitle, releaseDate, posterPath, backdropPath, voteAverage, plot;
+    public ArrayList<Trailer> trailers;
+    public ArrayList<Review> reviews;
+
+    public String getMovieId() {
+        return movieId;
+    }
+
+    public void setMovieId(String movieId) {
+        this.movieId = movieId;
+    }
 
     public String getMovieTitle() {
         return movieTitle;
@@ -50,6 +65,22 @@ public class MovieDetails {
 
     public void setPlot(String plot) {
         this.plot = plot;
+    }
+
+    public ArrayList<Review> getReviews() {
+        return reviews;
+    }
+
+    public void setReviews(ArrayList<Review> reviews) {
+        this.reviews = reviews;
+    }
+
+    public ArrayList<Trailer> getTrailers() {
+        return trailers;
+    }
+
+    public void setTrailers(ArrayList<Trailer> trailers) {
+        this.trailers = trailers;
     }
 
 }

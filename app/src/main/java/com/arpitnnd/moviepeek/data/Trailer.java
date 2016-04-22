@@ -1,5 +1,8 @@
 package com.arpitnnd.moviepeek.data;
 
+import org.parceler.Parcel;
+
+@Parcel
 public class Trailer {
 
     private String name, key;
@@ -12,11 +15,11 @@ public class Trailer {
         this.key = key;
     }
 
-    public String getTName() {
+    public String getTrailerName() {
         return name;
     }
 
-    public void setTName(String name) {
+    public void setTrailerName(String name) {
         this.name = name;
     }
 

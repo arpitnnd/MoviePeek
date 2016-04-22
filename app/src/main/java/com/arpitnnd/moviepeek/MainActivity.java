@@ -16,23 +16,28 @@ import android.widget.GridView;
 import android.widget.Toast;
 
 import com.arpitnnd.moviepeek.adapters.GridViewAdapter;
+import com.arpitnnd.moviepeek.data.DBHandler;
+import com.arpitnnd.moviepeek.data.MovieDetails;
 
 import org.json.JSONException;
+import org.parceler.Parcels;
 
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
     public static APITools api;
-    GridView gridView;
-    boolean sortByPopularity;
-    SharedPreferences sharedPref;
+    public static DBHandler dbHandler;
+    private GridView gridView;
+    private SharedPreferences sharedPref;
+    private String sortCriteria;
+    private ArrayList<String> movieIds;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(R.layout.activity_main);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -41,37 +46,38 @@ public class MainActivity extends AppCompatActivity {
         refreshPosters();
 
         gridView = (GridView) findViewById(R.id.gridView);
-
         if (savedInstanceState != null)
             gridView.setSelection(savedInstanceState.getInt("scroll_state"));
-
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(getApplicationContext(), DetailsActivity.class);
-                intent.putExtra("position", position);
-                startActivity(intent);
+                new DetailsLoadTask(sortCriteria, position).execute();
             }
         });
-
     }
 
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
         savedInstanceState.putInt("scroll_state", gridView.getFirstVisiblePosition());
-
         super.onSaveInstanceState(savedInstanceState);
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         getMenuInflater().inflate(R.menu.menu_popup, menu);
-        if (sharedPref.getBoolean("sort_by_pop", true))
-            menu.findItem(R.id.pop).setChecked(true);
-        else
-            menu.findItem(R.id.rat).setChecked(true);
+        String criteria = sharedPref.getString("sort_criteria", "pop");
+        switch (criteria) {
+            case "pop":
+                menu.findItem(R.id.pop).setChecked(true);
+                break;
+            case "rat":
+                menu.findItem(R.id.rat).setChecked(true);
+                break;
+            default:
+                menu.findItem(R.id.fav).setChecked(true);
+                break;
+        }
         return true;
     }
 
@@ -79,49 +85,66 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
-        if (id == R.id.pop || id == R.id.rat) {
+        if (id == R.id.pop || id == R.id.rat || id == R.id.fav) {
             SharedPreferences.Editor editor = sharedPref.edit();
+            String criteria;
 
             if (id == R.id.pop)
-                editor.putBoolean("sort_by_pop", true);
-            else
-                editor.putBoolean("sort_by_pop", false);
+                criteria = "pop";
+            else if (id == R.id.rat)
+                criteria = "rat";
+            else criteria = "fav";
+            editor.putString("sort_criteria", criteria);
 
-            boolean temp = sharedPref.getBoolean("sort_by_pop", true);
+            String temp = sharedPref.getString("sort_criteria", "pop");
             editor.apply();
-            if (!(temp == sharedPref.getBoolean("sort_by_pop", true))) {
+            if (!(temp.equals(sharedPref.getString("sort_criteria", "pop")))) {
                 refreshPosters();
             }
             invalidateOptionsMenu();
+        } else if (id == R.id.action_settings) {
+            Toast.makeText(MainActivity.this, "Feature not implemented yet.",
+                    Toast.LENGTH_SHORT).show();
         }
-
-        //noinspection SimplifiableIfStatement
-        else if (id == R.id.action_settings) {
-            Toast.makeText(MainActivity.this, "Feature not implemented yet.", Toast.LENGTH_SHORT).show();
-        }
-
         return super.onOptionsItemSelected(item);
     }
 
     public void refreshPosters() {
-        if (api.isNetworkAvailable()) {
-            sortByPopularity = sharedPref.getBoolean("sort_by_pop", true);
-            new ImageLoadTask().execute();
-        } else {
-            Snackbar.make(findViewById(R.id.coordinatorLayout), "No internet access.", Snackbar.LENGTH_INDEFINITE).show();
+        sortCriteria = sharedPref.getString("sort_criteria", "pop");
+        new ImageLoadTask().execute(sortCriteria);
+    }
+
+    public boolean checkNetwork() {
+        if (api.isNetworkAvailable())
+            return true;
+        else {
+            Snackbar.make(findViewById(R.id.coordinatorLayout),
+                    "No internet access.",
+                    Snackbar.LENGTH_INDEFINITE).show();
+            return false;
         }
     }
 
-    public class ImageLoadTask extends AsyncTask<Void, Void, ArrayList<String>> {
+    public class ImageLoadTask extends AsyncTask<String, Void, ArrayList<String>> {
 
         @Override
-        protected ArrayList<String> doInBackground(Void... params) {
+        protected ArrayList<String> doInBackground(String... params) {
+            ArrayList<String> posterPaths = new ArrayList<>();
 
-            ArrayList<String> posterPaths = null;
-            try {
-                posterPaths = api.getPosterPaths(sortByPopularity);
-            } catch (JSONException e) {
-                e.printStackTrace();
+            if (!params[0].equals("fav")) {
+                boolean sortByPopularity = params[0].equals("pop");
+                if (checkNetwork())
+                    try {
+                        posterPaths = api.getPosterPaths(sortByPopularity);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+            } else {
+                dbHandler = new DBHandler(getApplicationContext());
+                movieIds = dbHandler.fetchFavouriteIds();
+
+                for (String Id : movieIds)
+                    posterPaths.add(dbHandler.fetchPosterPath(Id));
             }
             return posterPaths;
         }
@@ -133,6 +156,40 @@ public class MainActivity extends AppCompatActivity {
                 gridView.setAdapter(adapter);
             }
         }
+
+    }
+
+    public class DetailsLoadTask extends AsyncTask<Void, Void, MovieDetails> {
+
+        String sortCriteria;
+        int position;
+
+        public DetailsLoadTask(String sortCriteria, int position) {
+            this.sortCriteria = sortCriteria;
+            this.position = position;
+        }
+
+        @Override
+        protected MovieDetails doInBackground(Void... params) {
+            MovieDetails movieDetails = new MovieDetails();
+
+            if (!sortCriteria.equals("fav"))
+                try {
+                    movieDetails = api.getMovieDetails(sortCriteria.equals("pop"), position);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            else movieDetails = dbHandler.fetchMovieDetails(movieIds.get(position));
+            return movieDetails;
+        }
+
+        @Override
+        protected void onPostExecute(MovieDetails result) {
+            Intent intent = new Intent(getApplicationContext(), DetailsActivity.class);
+            intent.putExtra("movie", Parcels.wrap(result));
+            startActivity(intent);
+        }
+
     }
 
 }
