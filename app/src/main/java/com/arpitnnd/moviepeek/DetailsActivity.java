@@ -11,11 +11,14 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.arpitnnd.moviepeek.adapters.ReviewAdapter;
 import com.arpitnnd.moviepeek.adapters.TrailerAdapter;
+import com.arpitnnd.moviepeek.data.DBHandler;
 import com.arpitnnd.moviepeek.data.MovieDetails;
 import com.bumptech.glide.Glide;
 import com.yqritc.recyclerviewflexibledivider.HorizontalDividerItemDecoration;
@@ -59,13 +62,26 @@ public class DetailsActivity extends AppCompatActivity {
                 .setText(String.format("%.2f", Float.valueOf(movie.getVoteAverage())));
         ((TextView) findViewById(R.id.overview)).setText(movie.getPlot());
 
+        final DBHandler db = new DBHandler(getApplicationContext());
+        CheckBox favCheckBox = (CheckBox) findViewById(R.id.fav_checkBox);
+        if (db.isFav(movie.getMovieId()))
+            favCheckBox.setChecked(true);
+        favCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked)
+                    db.addFavMovie(movie);
+                else db.deleteFavMovie(movie.getMovieId());
+            }
+        });
+
         RecyclerView mTrailerRecyclerView = (RecyclerView) findViewById(R.id.trailers_recycler);
         RecyclerView.LayoutManager llm
                 = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
         if (mTrailerRecyclerView != null) {
             mTrailerRecyclerView.setHasFixedSize(false);
             mTrailerRecyclerView.setLayoutManager(llm);
-            TrailerAdapter mTrailerAdapter = new TrailerAdapter(movie.getTrailers());
+            TrailerAdapter mTrailerAdapter = new TrailerAdapter(movie.getTrailers(), getApplicationContext());
             mTrailerRecyclerView.setAdapter(mTrailerAdapter);
             mTrailerAdapter.setOnItemClickListener(new TrailerAdapter.OnItemClickListener() {
 

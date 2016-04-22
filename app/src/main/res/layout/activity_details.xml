@@ -85,7 +85,7 @@
 
                         <GridLayout
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent"
+                            android:layout_height="wrap_content"
                             android:columnCount="2"
                             android:orientation="horizontal">
 
@@ -130,6 +130,17 @@
                                 android:text="0.00"
                                 android:textSize="20sp"
                                 android:textStyle="bold|italic" />
+
+                            <CheckBox
+                                android:id="@+id/fav_checkBox"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_columnSpan="2"
+                                android:layout_gravity="right"
+                                android:layout_marginRight="8dp"
+                                android:layout_marginTop="24dp"
+                                android:button="@drawable/fav_icon"
+                                android:buttonTint="@color/colorAccent" />
 
                         </GridLayout>
 

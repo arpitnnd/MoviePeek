@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -32,15 +33,16 @@ public class DBHandler extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         final String SQL_CREATE_MOVIES_TABLE = "CREATE TABLE " + TABLE_FAV
                 + " (" +
-                COLUMN_ID + " INTEGER PRIMARY KEY," +
+                COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
                 COLUMN_MOVIE_ID + " TEXT NOT NULL, " +
                 COLUMN_MOVIE_TITLE + " TEXT NOT NULL, " +
                 COLUMN_MOVIE_POSTER_PATH + " TEXT NOT NULL, " +
                 COLUMN_MOVIE_OVERVIEW + " TEXT NOT NULL, " +
                 COLUMN_MOVIE_VOTE_AVERAGE + " TEXT NOT NULL, " +
                 COLUMN_MOVIE_RELEASE_DATE + " TEXT NOT NULL, " +
-                COLUMN_MOVIE_BACKDROP_PATH + " TEXT NOT NULL " +
-
+                COLUMN_MOVIE_BACKDROP_PATH + " TEXT NOT NULL, " +
+                COLUMN_MOVIE_TRAILERS + " TEXT, " +
+                COLUMN_MOVIE_REVIEWS + " TEXT" +
                 " );";
         sqLiteDatabase.execSQL(SQL_CREATE_MOVIES_TABLE);
     }
@@ -66,14 +68,33 @@ public class DBHandler extends SQLiteOpenHelper {
         values.put(COLUMN_MOVIE_REVIEWS, reviewsToString(movie.getReviews()));
         db.insert(TABLE_FAV, null, values);
         values.clear();
-        db.close(); // Closing database connection
+        db.close();
+    }
+
+    public void deleteFavMovie(String id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        db.delete(TABLE_FAV, COLUMN_MOVIE_ID + " = ?", new String[]{id});
+        db.close();
+    }
+
+    public boolean isFav(String id) {
+        String existsQuery = "SELECT * FROM " + TABLE_FAV +
+                " WHERE " + COLUMN_MOVIE_ID +
+                " = '" + id + "'";
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery(existsQuery, null);
+        int count = cursor.getCount();
+        cursor.close();
+        db.close();
+        return count > 0;
     }
 
     public String fetchPosterPath(String id) {
-        String listQuery = "SELECT " + COLUMN_MOVIE_POSTER_PATH
-                + " FROM " + TABLE_FAV
-                + " WHERE " + COLUMN_MOVIE_ID
-                + " = " + id;
+        String listQuery = "SELECT " + COLUMN_MOVIE_POSTER_PATH +
+                " FROM " + TABLE_FAV +
+                " WHERE " + COLUMN_MOVIE_ID +
+                " = '" + id + "'";
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery(listQuery, null);
         cursor.moveToFirst();
@@ -84,7 +105,9 @@ public class DBHandler extends SQLiteOpenHelper {
     }
 
     public ArrayList<String> fetchFavouriteIds() {
-        String listQuery = "SELECT " + COLUMN_MOVIE_ID + " FROM " + TABLE_FAV;
+        String listQuery = "SELECT " + COLUMN_MOVIE_ID +
+                " FROM " + TABLE_FAV +
+                " ORDER BY " + COLUMN_ID;
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery(listQuery, null);
         ArrayList<String> ids = new ArrayList<>();
@@ -101,9 +124,9 @@ public class DBHandler extends SQLiteOpenHelper {
     }
 
     public MovieDetails fetchMovieDetails(String id) {
-        String listQuery = "SELECT * FROM " + TABLE_FAV
-                + " WHERE " + COLUMN_MOVIE_ID
-                + " = " + id;
+        String listQuery = "SELECT * FROM " + TABLE_FAV +
+                " WHERE " + COLUMN_MOVIE_ID +
+                " = '" + id + "'";
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery(listQuery, null);
         MovieDetails movie = new MovieDetails();
@@ -135,26 +158,27 @@ public class DBHandler extends SQLiteOpenHelper {
     public String reviewsToString(ArrayList<Review> reviews) {
         String string = "";
         for (Review review : reviews)
-            string += "--" + review.getAuthor()
-                    + ";" + review.getContent();
+            string += "<--new>" + review.getAuthor() +
+                    ";" + review.getContent();
         return string;
     }
 
     public String trailersToString(ArrayList<Trailer> trailers) {
         String string = "";
         for (Trailer trailer : trailers)
-            string += "--" + trailer.getTrailerName()
-                    + ";" + trailer.getKey();
+            string += "--" + trailer.getTrailerName() +
+                    ";" + trailer.getKey();
         return string;
     }
 
     public ArrayList<Trailer> parseTrailers(String string) {
         ArrayList<Trailer> trailers = new ArrayList<>();
+        Log.d("string=", string);
         String[] trailersArray = string.split("--");
 
-        for (String trailerElement : trailersArray) {
+        for (int i = 1; i < trailersArray.length; i++) {
             Trailer trailer = new Trailer();
-            String[] trailerItems = trailerElement.split(";", 2);
+            String[] trailerItems = trailersArray[i].split(";", 2);
             trailer.setTrailerName(trailerItems[0]);
             trailer.setKey(trailerItems[1]);
             trailers.add(trailer);
@@ -164,11 +188,11 @@ public class DBHandler extends SQLiteOpenHelper {
 
     public ArrayList<Review> parseReviews(String string) {
         ArrayList<Review> reviews = new ArrayList<>();
-        String[] reviewsArray = string.split("--");
+        String[] reviewsArray = string.split("<--new>");
 
-        for (String reviewElement : reviewsArray) {
+        for (int i = 1; i < reviewsArray.length; i++) {
             Review review = new Review();
-            String[] reviewItems = reviewElement.split(";", 2);
+            String[] reviewItems = reviewsArray[i].split(";", 2);
             review.setAuthor(reviewItems[0]);
             review.setContent(reviewItems[1]);
             reviews.add(review);

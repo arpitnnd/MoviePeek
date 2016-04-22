@@ -52,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 new DetailsLoadTask(sortCriteria, position).execute();
+                findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
             }
         });
     }
@@ -188,6 +189,7 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(getApplicationContext(), DetailsActivity.class);
             intent.putExtra("movie", Parcels.wrap(result));
             startActivity(intent);
+            findViewById(R.id.progressBar).setVisibility(View.GONE);
         }
 
     }

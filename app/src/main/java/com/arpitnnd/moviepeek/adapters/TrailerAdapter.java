@@ -1,5 +1,6 @@
 package com.arpitnnd.moviepeek.adapters;
 
+import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,6 +10,7 @@ import android.widget.TextView;
 
 import com.arpitnnd.moviepeek.R;
 import com.arpitnnd.moviepeek.data.Trailer;
+import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
 
@@ -16,9 +18,11 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.ViewHold
 
     private static OnItemClickListener mItemClickListener;
     private ArrayList<Trailer> mDataset;
+    private Context mContext;
 
-    public TrailerAdapter(ArrayList<Trailer> myDataset) {
+    public TrailerAdapter(ArrayList<Trailer> myDataset, Context myContext) {
         mDataset = myDataset;
+        mContext = myContext;
     }
 
     @Override
@@ -30,7 +34,9 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.ViewHold
 
     @Override
     public void onBindViewHolder(final ViewHolder holder, final int position) {
-        //Thumbnail not yet implemented
+        Glide.with(mContext).
+                load("http://img.youtube.com/vi/" + mDataset.get(position).getKey() + "/0.jpg").
+                into(holder.mImageViewThumbnail);
         holder.mTextViewTitle.setText(mDataset.get(position).getTrailerName());
     }
 
@@ -55,11 +61,11 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.ViewHold
 
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         public TextView mTextViewTitle;
-        public ImageView mImageView;
+        public ImageView mImageViewThumbnail;
 
         public ViewHolder(View v) {
             super(v);
-            mImageView = (ImageView) v.findViewById(R.id.video_thumbnail);
+            mImageViewThumbnail = (ImageView) v.findViewById(R.id.video_thumbnail);
             mTextViewTitle = (TextView) v.findViewById(R.id.video_title);
             v.setOnClickListener(this);
         }
