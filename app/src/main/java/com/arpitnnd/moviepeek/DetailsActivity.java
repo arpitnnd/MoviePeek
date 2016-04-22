@@ -133,7 +133,8 @@ public class DetailsActivity extends AppCompatActivity {
 
             shareIntent.setType("text/plain");
             shareIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, title);
-            shareIntent.putExtra(android.content.Intent.EXTRA_TEXT, trailer.getTrailerName() + ": "
+            shareIntent.putExtra(android.content.Intent.EXTRA_TEXT, title +
+                    ":" + trailer.getTrailerName() + ": "
                     + "https://www.youtube.com/watch?v=" + trailer.getKey());
             mShareActionProvider.setShareIntent(shareIntent);
         }
