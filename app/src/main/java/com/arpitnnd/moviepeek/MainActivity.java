@@ -26,12 +26,12 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static APITools api;
-    public static DBHandler dbHandler;
-    private GridView gridView;
-    private SharedPreferences sharedPref;
-    private String sortCriteria;
-    private ArrayList<String> movieIds;
+    private APITools mApi;
+    private DBHandler mDbHandler;
+    private GridView mGridView;
+    private SharedPreferences mSharedPref;
+    private String mSortCriteria;
+    private ArrayList<String> mMovieIds;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,17 +41,17 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        sharedPref = getSharedPreferences("prefs", Context.MODE_PRIVATE);
-        api = new APITools(this);
+        mSharedPref = getSharedPreferences("prefs", Context.MODE_PRIVATE);
+        mApi = new APITools(this);
         refreshPosters();
 
-        gridView = (GridView) findViewById(R.id.gridView);
+        mGridView = (GridView) findViewById(R.id.gridView);
         if (savedInstanceState != null)
-            gridView.setSelection(savedInstanceState.getInt("scroll_state"));
-        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            mGridView.setSelection(savedInstanceState.getInt("scroll_state"));
+        mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                new DetailsLoadTask(sortCriteria, position).execute();
+                new DetailsLoadTask(mSortCriteria, position).execute();
                 findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
             }
         });
@@ -59,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
-        savedInstanceState.putInt("scroll_state", gridView.getFirstVisiblePosition());
+        savedInstanceState.putInt("scroll_state", mGridView.getFirstVisiblePosition());
         super.onSaveInstanceState(savedInstanceState);
     }
 
@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         getMenuInflater().inflate(R.menu.menu_popup, menu);
-        String criteria = sharedPref.getString("sort_criteria", "pop");
+        String criteria = mSharedPref.getString("sort_criteria", "pop");
         switch (criteria) {
             case "pop":
                 menu.findItem(R.id.pop).setChecked(true);
@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         if (id == R.id.pop || id == R.id.rat || id == R.id.fav) {
-            SharedPreferences.Editor editor = sharedPref.edit();
+            SharedPreferences.Editor editor = mSharedPref.edit();
             String criteria;
 
             if (id == R.id.pop)
@@ -97,9 +97,9 @@ public class MainActivity extends AppCompatActivity {
             else criteria = "fav";
             editor.putString("sort_criteria", criteria);
 
-            String temp = sharedPref.getString("sort_criteria", "pop");
+            String temp = mSharedPref.getString("sort_criteria", "pop");
             editor.apply();
-            if (!(temp.equals(sharedPref.getString("sort_criteria", "pop")))) {
+            if (!(temp.equals(mSharedPref.getString("sort_criteria", "pop")))) {
                 refreshPosters();
             }
             invalidateOptionsMenu();
@@ -111,12 +111,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void refreshPosters() {
-        sortCriteria = sharedPref.getString("sort_criteria", "pop");
-        new ImageLoadTask().execute(sortCriteria);
+        mSortCriteria = mSharedPref.getString("sort_criteria", "pop");
+        new ImageLoadTask().execute(mSortCriteria);
     }
 
     public boolean checkNetwork() {
-        if (api.isNetworkAvailable())
+        if (mApi.isNetworkAvailable())
             return true;
         else {
             Snackbar.make(findViewById(R.id.coordinatorLayout),
@@ -136,16 +136,16 @@ public class MainActivity extends AppCompatActivity {
                 boolean sortByPopularity = params[0].equals("pop");
                 if (checkNetwork())
                     try {
-                        posterPaths = api.getPosterPaths(sortByPopularity);
+                        posterPaths = mApi.getPosterPaths(sortByPopularity);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
             } else {
-                dbHandler = new DBHandler(getApplicationContext());
-                movieIds = dbHandler.fetchFavouriteIds();
+                mDbHandler = new DBHandler(getApplicationContext());
+                mMovieIds = mDbHandler.fetchFavouriteIds();
 
-                for (String Id : movieIds)
-                    posterPaths.add(dbHandler.fetchPosterPath(Id));
+                for (String Id : mMovieIds)
+                    posterPaths.add(mDbHandler.fetchPosterPath(Id));
             }
             return posterPaths;
         }
@@ -154,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(ArrayList<String> result) {
             if (result != null) {
                 GridViewAdapter adapter = new GridViewAdapter(getApplicationContext(), result);
-                gridView.setAdapter(adapter);
+                mGridView.setAdapter(adapter);
             }
         }
 
@@ -176,11 +176,11 @@ public class MainActivity extends AppCompatActivity {
 
             if (!sortCriteria.equals("fav"))
                 try {
-                    movieDetails = api.getMovieDetails(sortCriteria.equals("pop"), position);
+                    movieDetails = mApi.getMovieDetails(sortCriteria.equals("pop"), position);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-            else movieDetails = dbHandler.fetchMovieDetails(movieIds.get(position));
+            else movieDetails = mDbHandler.fetchMovieDetails(mMovieIds.get(position));
             return movieDetails;
         }
 

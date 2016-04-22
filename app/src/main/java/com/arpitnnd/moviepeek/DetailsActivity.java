@@ -37,16 +37,16 @@ import java.util.Locale;
 public class DetailsActivity extends AppCompatActivity {
 
     private ShareActionProvider mShareActionProvider;
-    private String title;
-    private Trailer trailerToShare;
+    private String mTitle;
+    private Trailer mTrailerToShare;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_details);
         final MovieDetails movie = Parcels.unwrap(getIntent().getParcelableExtra("movie"));
-        title = movie.getMovieTitle();
-        trailerToShare = movie.getTrailers().get(0);
+        mTitle = movie.getMovieTitle();
+        mTrailerToShare = movie.getTrailers().get(0);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -85,15 +85,16 @@ public class DetailsActivity extends AppCompatActivity {
             }
         });
 
-        RecyclerView mTrailerRecyclerView = (RecyclerView) findViewById(R.id.trailers_recycler);
+        RecyclerView trailerRecyclerView = (RecyclerView) findViewById(R.id.trailers_recycler);
         RecyclerView.LayoutManager llm
                 = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
-        if (mTrailerRecyclerView != null) {
-            mTrailerRecyclerView.setHasFixedSize(false);
-            mTrailerRecyclerView.setLayoutManager(llm);
-            TrailerAdapter mTrailerAdapter = new TrailerAdapter(movie.getTrailers(), getApplicationContext());
-            mTrailerRecyclerView.setAdapter(mTrailerAdapter);
-            mTrailerAdapter.setOnItemClickListener(new TrailerAdapter.OnItemClickListener() {
+        if (trailerRecyclerView != null) {
+            trailerRecyclerView.setHasFixedSize(false);
+            trailerRecyclerView.setLayoutManager(llm);
+            TrailerAdapter trailerAdapter =
+                    new TrailerAdapter(movie.getTrailers(), getApplicationContext());
+            trailerRecyclerView.setAdapter(trailerAdapter);
+            trailerAdapter.setOnItemClickListener(new TrailerAdapter.OnItemClickListener() {
 
                 @Override
                 public void onItemClick(View view, int position) {
@@ -106,14 +107,17 @@ public class DetailsActivity extends AppCompatActivity {
         }
 
         if (movie.getReviews().size() != 0) {
-            RecyclerView mReviewRecyclerView = (RecyclerView) findViewById(R.id.reviews_recycler);
-            if (mReviewRecyclerView != null) {
-                mReviewRecyclerView.setHasFixedSize(false);
+            RecyclerView reviewRecyclerView = (RecyclerView) findViewById(R.id.reviews_recycler);
+            if (reviewRecyclerView != null) {
+                reviewRecyclerView.setHasFixedSize(false);
                 RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
-                mReviewRecyclerView.setLayoutManager(layoutManager);
-                mReviewRecyclerView.addItemDecoration(new HorizontalDividerItemDecoration.Builder(this).build());
-                ReviewAdapter mReviewAdapter = new ReviewAdapter(movie.getReviews());
-                mReviewRecyclerView.setAdapter(mReviewAdapter);
+                reviewRecyclerView.setLayoutManager(layoutManager);
+                reviewRecyclerView.addItemDecoration(
+                        new HorizontalDividerItemDecoration.
+                                Builder(this).
+                                build());
+                ReviewAdapter reviewAdapter = new ReviewAdapter(movie.getReviews());
+                reviewRecyclerView.setAdapter(reviewAdapter);
             }
         } else findViewById(R.id.noReviews_textView).setVisibility(View.VISIBLE);
     }
@@ -123,7 +127,7 @@ public class DetailsActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.menu_details, menu);
         MenuItem item = menu.findItem(R.id.action_share);
         mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
-        setShareIntent(trailerToShare);
+        setShareIntent(mTrailerToShare);
         return true;
     }
 
@@ -132,8 +136,8 @@ public class DetailsActivity extends AppCompatActivity {
             Intent shareIntent = new Intent(android.content.Intent.ACTION_SEND);
 
             shareIntent.setType("text/plain");
-            shareIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, title);
-            shareIntent.putExtra(android.content.Intent.EXTRA_TEXT, title +
+            shareIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, mTitle);
+            shareIntent.putExtra(android.content.Intent.EXTRA_TEXT, mTitle +
                     ":" + trailer.getTrailerName() + ": "
                     + "https://www.youtube.com/watch?v=" + trailer.getKey());
             mShareActionProvider.setShareIntent(shareIntent);
