@@ -5,10 +5,13 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.ShareActionProvider;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.CheckBox;
@@ -20,6 +23,7 @@ import com.arpitnnd.moviepeek.adapters.ReviewAdapter;
 import com.arpitnnd.moviepeek.adapters.TrailerAdapter;
 import com.arpitnnd.moviepeek.data.DBHandler;
 import com.arpitnnd.moviepeek.data.MovieDetails;
+import com.arpitnnd.moviepeek.data.Trailer;
 import com.bumptech.glide.Glide;
 import com.yqritc.recyclerviewflexibledivider.HorizontalDividerItemDecoration;
 
@@ -32,11 +36,17 @@ import java.util.Locale;
 
 public class DetailsActivity extends AppCompatActivity {
 
+    private ShareActionProvider mShareActionProvider;
+    private String title;
+    private Trailer trailerToShare;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_details);
         final MovieDetails movie = Parcels.unwrap(getIntent().getParcelableExtra("movie"));
+        title = movie.getMovieTitle();
+        trailerToShare = movie.getTrailers().get(0);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -109,11 +119,32 @@ public class DetailsActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_details, menu);
+        MenuItem item = menu.findItem(R.id.action_share);
+        mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
+        setShareIntent(trailerToShare);
+        return true;
+    }
+
+    private void setShareIntent(Trailer trailer) {
+        if (mShareActionProvider != null) {
+            Intent shareIntent = new Intent(android.content.Intent.ACTION_SEND);
+
+            shareIntent.setType("text/plain");
+            shareIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, title);
+            shareIntent.putExtra(android.content.Intent.EXTRA_TEXT, trailer.getTrailerName() + ": "
+                    + "https://www.youtube.com/watch?v=" + trailer.getKey());
+            mShareActionProvider.setShareIntent(shareIntent);
+        }
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
         if (id == android.R.id.home) {
-            finish();
+            onBackPressed();
             return true;
         }
         return super.onOptionsItemSelected(item);
