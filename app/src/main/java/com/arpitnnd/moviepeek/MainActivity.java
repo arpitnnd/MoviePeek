@@ -1,5 +1,7 @@
 package com.arpitnnd.moviepeek;
 
+import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -47,19 +49,20 @@ public class MainActivity extends AppCompatActivity {
 
         mGridView = (GridView) findViewById(R.id.gridView);
         if (savedInstanceState != null)
-            mGridView.setSelection(savedInstanceState.getInt("scroll_state"));
+            mGridView.setSelection(savedInstanceState.getInt("GRID_SCROLL_STATE"));
         mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if (findViewById(R.id.details_frame) == null)
+                    findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
                 new DetailsLoadTask(mSortCriteria, position).execute();
-                findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
             }
         });
     }
 
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
-        savedInstanceState.putInt("scroll_state", mGridView.getFirstVisiblePosition());
+        savedInstanceState.putInt("GRID_SCROLL_STATE", mGridView.getFirstVisiblePosition());
         super.onSaveInstanceState(savedInstanceState);
     }
 
@@ -186,10 +189,20 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(MovieDetails result) {
-            Intent intent = new Intent(getApplicationContext(), DetailsActivity.class);
-            intent.putExtra("movie", Parcels.wrap(result));
-            startActivity(intent);
-            findViewById(R.id.progressBar).setVisibility(View.GONE);
+            if (findViewById(R.id.details_frame) == null) {
+                Intent intent = new Intent(getApplicationContext(), DetailsActivity.class);
+                intent.putExtra("movie", Parcels.wrap(result));
+                startActivity(intent);
+                findViewById(R.id.progressBar).setVisibility(View.GONE);
+            } else {
+                Bundle bundle = new Bundle();
+                bundle.putParcelable("movie", Parcels.wrap(result));
+                Fragment fragment = new DetailsFragment();
+                fragment.setArguments(bundle);
+                FragmentTransaction ft = getFragmentManager().beginTransaction();
+                ft.replace(R.id.details_frame, fragment);
+                ft.commit();
+            }
         }
 
     }
