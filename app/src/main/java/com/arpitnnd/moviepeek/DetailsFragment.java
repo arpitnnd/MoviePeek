@@ -61,18 +61,21 @@ public class DetailsFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_details, container, false);
 
         ((TextView) v.findViewById(R.id.title)).setText(mMovie.getMovieTitle());
-        Drawable d = ContextCompat.getDrawable(getActivity().getApplicationContext(), R.drawable.loading);
-        Glide.with(this).load("http://image.tmdb.org/t/p/w185/" + mMovie.getPosterPath())
-                .placeholder(d).into((ImageView) v.findViewById(R.id.poster));
+        Drawable d = ContextCompat.getDrawable(getActivity().getApplicationContext(),
+                R.drawable.loading);
+        Glide.with(this).load("http://image.tmdb.org/t/p/w185/" + mMovie.getPosterPath()).
+                placeholder(d).
+                into((ImageView) v.findViewById(R.id.poster));
         SimpleDateFormat input = new SimpleDateFormat("yyyy-mm-dd", Locale.getDefault());
         try {
-            ((TextView) v.findViewById(R.id.date)).setText(DateFormat.getDateInstance(DateFormat.SHORT)
-                    .format(input.parse(mMovie.getReleaseDate())));
+            ((TextView) v.findViewById(R.id.date)).
+                    setText(DateFormat.getDateInstance(DateFormat.SHORT).
+                            format(input.parse(mMovie.getReleaseDate())));
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        ((TextView) v.findViewById(R.id.rating))
-                .setText(String.format("%.2f", Float.valueOf(mMovie.getVoteAverage())));
+        ((TextView) v.findViewById(R.id.rating)).
+                setText(String.format("%.2f", Float.valueOf(mMovie.getVoteAverage())));
         ((TextView) v.findViewById(R.id.overview)).setText(mMovie.getPlot());
 
         final DBHandler db = new DBHandler(getActivity().getApplicationContext());
@@ -89,8 +92,9 @@ public class DetailsFragment extends Fragment {
         });
 
         RecyclerView trailerRecyclerView = (RecyclerView) v.findViewById(R.id.trailers_recycler);
-        RecyclerView.LayoutManager llm
-                = new LinearLayoutManager(getActivity().getApplicationContext(), LinearLayoutManager.HORIZONTAL, false);
+        RecyclerView.LayoutManager llm =
+                new LinearLayoutManager(getActivity().getApplicationContext(),
+                        LinearLayoutManager.HORIZONTAL, false);
         if (trailerRecyclerView != null) {
             trailerRecyclerView.setHasFixedSize(false);
             trailerRecyclerView.setLayoutManager(llm);
@@ -113,7 +117,8 @@ public class DetailsFragment extends Fragment {
             RecyclerView reviewRecyclerView = (RecyclerView) v.findViewById(R.id.reviews_recycler);
             if (reviewRecyclerView != null) {
                 reviewRecyclerView.setHasFixedSize(false);
-                RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getActivity().getApplicationContext());
+                RecyclerView.LayoutManager layoutManager =
+                        new LinearLayoutManager(getActivity().getApplicationContext());
                 reviewRecyclerView.setLayoutManager(layoutManager);
                 reviewRecyclerView.addItemDecoration(
                         new HorizontalDividerItemDecoration.
@@ -167,8 +172,9 @@ public class DetailsFragment extends Fragment {
             shareIntent.setType("text/plain");
             shareIntent.putExtra(android.content.Intent.EXTRA_SUBJECT, mMovie.getMovieTitle());
             shareIntent.putExtra(android.content.Intent.EXTRA_TEXT, mMovie.getMovieTitle() +
-                    ": " + trailer.getTrailerName() + ": "
-                    + "https://www.youtube.com/watch?v=" + trailer.getKey());
+                    ": " + trailer.getTrailerName() + ": " +
+                    "https://www.youtube.com/watch?v=" +
+                    trailer.getKey());
             mShareActionProvider.setShareIntent(shareIntent);
         }
     }

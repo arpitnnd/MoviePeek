@@ -54,7 +54,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if (mIsTablet && getFragmentManager().findFragmentById(R.id.details_frame) != null)
-                    getFragmentManager().beginTransaction().remove(getFragmentManager().findFragmentById(R.id.details_frame)).commit();
+                    getFragmentManager().beginTransaction().
+                            remove(getFragmentManager().findFragmentById(R.id.details_frame)).
+                            commit();
                 findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
                 new DetailsLoadTask(mSortCriteria, position).execute();
             }
@@ -64,7 +66,8 @@ public class MainActivity extends AppCompatActivity {
             mGridView.setSelection(savedInstanceState.getInt("GRID_SCROLL_STATE"));
             if (mIsTablet) {
                 mFragment = getFragmentManager().getFragment(savedInstanceState, "fragment");
-                getFragmentManager().beginTransaction().replace(R.id.details_frame, mFragment).
+                getFragmentManager().beginTransaction().
+                        replace(R.id.details_frame, mFragment).
                         commit();
             }
         }

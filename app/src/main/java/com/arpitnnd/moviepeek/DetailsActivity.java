@@ -39,7 +39,9 @@ public class DetailsActivity extends AppCompatActivity {
             bundle.putParcelable("movie", Parcels.wrap(movie));
             mFragment.setArguments(bundle);
         }
-        getFragmentManager().beginTransaction().replace(R.id.activity_details_frame, mFragment).commit();
+        getFragmentManager().beginTransaction().
+                replace(R.id.activity_details_frame, mFragment).
+                commit();
     }
 
     @Override
