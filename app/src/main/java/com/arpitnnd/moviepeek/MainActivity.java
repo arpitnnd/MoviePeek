@@ -1,7 +1,6 @@
 package com.arpitnnd.moviepeek;
 
 import android.app.Fragment;
-import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -28,6 +27,7 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
+    private boolean mIsTablet;
     private APITools mApi;
     private DBHandler mDbHandler;
     private GridView mGridView;
@@ -39,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mIsTablet = findViewById(R.id.details_frame) != null;
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -53,8 +54,9 @@ public class MainActivity extends AppCompatActivity {
         mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (findViewById(R.id.details_frame) == null)
-                    findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
+                if (mIsTablet && getFragmentManager().findFragmentById(R.id.details_frame) != null)
+                    getFragmentManager().beginTransaction().remove(getFragmentManager().findFragmentById(R.id.details_frame)).commit();
+                findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
                 new DetailsLoadTask(mSortCriteria, position).execute();
             }
         });
@@ -124,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
         else {
             Snackbar.make(findViewById(R.id.coordinatorLayout),
                     "No internet access.",
-                    Snackbar.LENGTH_INDEFINITE).show();
+                    Snackbar.LENGTH_LONG).show();
             return false;
         }
     }
@@ -136,13 +138,14 @@ public class MainActivity extends AppCompatActivity {
             ArrayList<String> posterPaths = new ArrayList<>();
 
             if (!params[0].equals("fav")) {
-                boolean sortByPopularity = params[0].equals("pop");
-                if (checkNetwork())
+                if (checkNetwork()) {
+                    boolean sortByPopularity = params[0].equals("pop");
                     try {
                         posterPaths = mApi.getPosterPaths(sortByPopularity);
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
+                }
             } else {
                 mDbHandler = new DBHandler(getApplicationContext());
                 mMovieIds = mDbHandler.fetchFavouriteIds();
@@ -158,6 +161,9 @@ public class MainActivity extends AppCompatActivity {
             if (result != null) {
                 GridViewAdapter adapter = new GridViewAdapter(getApplicationContext(), result);
                 mGridView.setAdapter(adapter);
+                if (adapter.getCount() == 0)
+                    findViewById(R.id.noItems_textView).setVisibility(View.VISIBLE);
+                else findViewById(R.id.noItems_textView).setVisibility(View.GONE);
             }
         }
 
@@ -175,34 +181,38 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected MovieDetails doInBackground(Void... params) {
+
             MovieDetails movieDetails = new MovieDetails();
 
-            if (!sortCriteria.equals("fav"))
-                try {
-                    movieDetails = mApi.getMovieDetails(sortCriteria.equals("pop"), position);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            else movieDetails = mDbHandler.fetchMovieDetails(mMovieIds.get(position));
+            if (!sortCriteria.equals("fav")) {
+                if (checkNetwork())
+                    try {
+                        movieDetails = mApi.getMovieDetails(sortCriteria.equals("pop"), position);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                else movieDetails = null;
+            } else movieDetails = mDbHandler.fetchMovieDetails(mMovieIds.get(position));
             return movieDetails;
         }
 
         @Override
         protected void onPostExecute(MovieDetails result) {
-            if (findViewById(R.id.details_frame) == null) {
-                Intent intent = new Intent(getApplicationContext(), DetailsActivity.class);
-                intent.putExtra("movie", Parcels.wrap(result));
-                startActivity(intent);
-                findViewById(R.id.progressBar).setVisibility(View.GONE);
-            } else {
-                Bundle bundle = new Bundle();
-                bundle.putParcelable("movie", Parcels.wrap(result));
-                Fragment fragment = new DetailsFragment();
-                fragment.setArguments(bundle);
-                FragmentTransaction ft = getFragmentManager().beginTransaction();
-                ft.replace(R.id.details_frame, fragment);
-                ft.commit();
+            if (result != null) {
+                if (mIsTablet) {
+                    Bundle bundle = new Bundle();
+                    bundle.putParcelable("movie", Parcels.wrap(result));
+                    Fragment fragment = new DetailsFragment();
+                    fragment.setArguments(bundle);
+                    getFragmentManager().beginTransaction().replace(R.id.details_frame, fragment).
+                            commit();
+                } else {
+                    Intent intent = new Intent(getApplicationContext(), DetailsActivity.class);
+                    intent.putExtra("movie", Parcels.wrap(result));
+                    startActivity(intent);
+                }
             }
+            findViewById(R.id.progressBar).setVisibility(View.GONE);
         }
 
     }

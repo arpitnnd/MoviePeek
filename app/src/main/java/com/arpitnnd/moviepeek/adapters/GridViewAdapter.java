@@ -46,7 +46,6 @@ public class GridViewAdapter extends BaseAdapter {
             imageView = (ImageView) convertView;
         }
         imageView.setAdjustViewBounds(true);
-
         Drawable d = ContextCompat.getDrawable(mContext, R.drawable.loading);
         Glide.with(mContext).load("http://image.tmdb.org/t/p/w342/" + paths.get(position)).placeholder(d).into(imageView);
         return imageView;

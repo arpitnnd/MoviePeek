@@ -96,7 +96,6 @@ public class APITools {
 
     public String getMoviesJSON(boolean sortByPop) {
         String urlString;
-
         if (sortByPop) {
             urlString = "http://api.themoviedb.org/3/movie/popular?api_key=" + API_KEY;
         } else {
