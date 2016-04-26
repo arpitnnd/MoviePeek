@@ -123,16 +123,6 @@ public class DetailsFragment extends Fragment {
                 reviewRecyclerView.setAdapter(reviewAdapter);
             }
         } else v.findViewById(R.id.noReviews_textView).setVisibility(View.VISIBLE);
-
-        if (savedInstanceState != null) {
-            final int[] parentPosition = savedInstanceState.getIntArray("DETAILS_PARENT_SCROLL_STATE");
-            final int[] childPosition = savedInstanceState.getIntArray("DETAILS_CHILD_SCROLL_STATE");
-            NestedScrollView parent = (NestedScrollView) v.findViewById(R.id.parent_scrollView);
-            ScrollView child = (ScrollView) v.findViewById(R.id.child_scrollView);
-
-            parent.scrollTo(parentPosition[0], parentPosition[1]);
-            child.scrollTo(childPosition[0], childPosition[1]);
-        }
         return v;
     }
 
@@ -145,6 +135,20 @@ public class DetailsFragment extends Fragment {
                 new int[]{parent.getScrollX(), parent.getScrollY()});
         outState.putIntArray("DETAILS_CHILD_SCROLL_STATE",
                 new int[]{child.getScrollX(), child.getScrollY()});
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        if (savedInstanceState != null) {
+            final int[] parentPosition = savedInstanceState.getIntArray("DETAILS_PARENT_SCROLL_STATE");
+            final int[] childPosition = savedInstanceState.getIntArray("DETAILS_CHILD_SCROLL_STATE");
+            NestedScrollView parent = (NestedScrollView) getView().findViewById(R.id.parent_scrollView);
+            ScrollView child = (ScrollView) getView().findViewById(R.id.child_scrollView);
+
+            parent.scrollTo(parentPosition[0], parentPosition[1]);
+            child.scrollTo(childPosition[0], childPosition[1]);
+        }
     }
 
     @Override

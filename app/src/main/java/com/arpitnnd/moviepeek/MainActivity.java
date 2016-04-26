@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private SharedPreferences mSharedPref;
     private String mSortCriteria;
     private ArrayList<String> mMovieIds;
+    private Fragment mFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,8 +50,6 @@ public class MainActivity extends AppCompatActivity {
         refreshPosters();
 
         mGridView = (GridView) findViewById(R.id.gridView);
-        if (savedInstanceState != null)
-            mGridView.setSelection(savedInstanceState.getInt("GRID_SCROLL_STATE"));
         mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -60,12 +59,23 @@ public class MainActivity extends AppCompatActivity {
                 new DetailsLoadTask(mSortCriteria, position).execute();
             }
         });
+
+        if (savedInstanceState != null) {
+            mGridView.setSelection(savedInstanceState.getInt("GRID_SCROLL_STATE"));
+            if (mIsTablet) {
+                mFragment = getFragmentManager().getFragment(savedInstanceState, "fragment");
+                getFragmentManager().beginTransaction().replace(R.id.details_frame, mFragment).
+                        commit();
+            }
+        }
     }
 
     @Override
-    public void onSaveInstanceState(Bundle savedInstanceState) {
-        savedInstanceState.putInt("GRID_SCROLL_STATE", mGridView.getFirstVisiblePosition());
-        super.onSaveInstanceState(savedInstanceState);
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt("GRID_SCROLL_STATE", mGridView.getFirstVisiblePosition());
+        if (mIsTablet)
+            getFragmentManager().putFragment(outState, "fragment", mFragment);
     }
 
     @Override
@@ -206,6 +216,7 @@ public class MainActivity extends AppCompatActivity {
                     fragment.setArguments(bundle);
                     getFragmentManager().beginTransaction().replace(R.id.details_frame, fragment).
                             commit();
+                    mFragment = fragment;
                 } else {
                     Intent intent = new Intent(getApplicationContext(), DetailsActivity.class);
                     intent.putExtra("movie", Parcels.wrap(result));
