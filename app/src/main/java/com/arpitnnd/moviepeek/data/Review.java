@@ -5,7 +5,7 @@ import org.parceler.Parcel;
 @Parcel
 public class Review {
 
-    private String author, content;
+    public String author, content;
 
     public String getAuthor() {
         return author;

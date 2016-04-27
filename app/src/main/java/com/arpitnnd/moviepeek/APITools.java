@@ -22,7 +22,7 @@ import java.util.ArrayList;
 
 public class APITools {
 
-    private static String API_KEY = BuildConfig.API_KEY; // TODO: Replace value with your API key.
+    private static String API_KEY = BuildConfig.API_KEY;
     private Context context;
 
     APITools(Context context) {
