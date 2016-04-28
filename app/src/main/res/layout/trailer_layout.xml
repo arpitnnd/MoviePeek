@@ -43,8 +43,7 @@
             android:layout_marginTop="8dp"
             android:ellipsize="end"
             android:gravity="center_horizontal"
-            android:maxLines="1"
-            android:text="Trailer" />
+            android:maxLines="1" />
 
     </LinearLayout>
 

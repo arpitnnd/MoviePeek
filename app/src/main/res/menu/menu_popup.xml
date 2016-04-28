@@ -4,19 +4,19 @@
     <item
         android:id="@+id/action_sort"
         android:icon="@drawable/ic_sort"
-        android:title="Sort Criteria"
-        app:showAsAction="always">
+        android:title="@string/sort_criteria_menu"
+        app:showAsAction="ifRoom">
         <menu xmlns:android="http://schemas.android.com/apk/res/android">
             <group android:checkableBehavior="single">
                 <item
                     android:id="@+id/pop"
-                    android:title="Most Popular" />
+                    android:title="@string/most_popular" />
                 <item
                     android:id="@+id/rat"
-                    android:title="Highest Rated" />
+                    android:title="@string/highest_rated" />
                 <item
                     android:id="@+id/fav"
-                    android:title="Favourites" />
+                    android:title="@string/favourites" />
             </group>
         </menu>
     </item>

@@ -61,8 +61,7 @@ public class DetailsFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_details, container, false);
 
         ((TextView) v.findViewById(R.id.title)).setText(mMovie.getMovieTitle());
-        Drawable d = ContextCompat.getDrawable(getActivity().getApplicationContext(),
-                R.drawable.loading);
+        Drawable d = ContextCompat.getDrawable(getActivity(), R.drawable.loading);
         Glide.with(this).load("http://image.tmdb.org/t/p/w185/" + mMovie.getPosterPath()).
                 placeholder(d).
                 into((ImageView) v.findViewById(R.id.poster));
@@ -92,14 +91,12 @@ public class DetailsFragment extends Fragment {
         });
 
         RecyclerView trailerRecyclerView = (RecyclerView) v.findViewById(R.id.trailers_recycler);
-        RecyclerView.LayoutManager llm =
-                new LinearLayoutManager(getActivity().getApplicationContext(),
+        RecyclerView.LayoutManager llm = new LinearLayoutManager(getActivity(),
                         LinearLayoutManager.HORIZONTAL, false);
         if (trailerRecyclerView != null) {
             trailerRecyclerView.setHasFixedSize(false);
             trailerRecyclerView.setLayoutManager(llm);
-            TrailerAdapter trailerAdapter =
-                    new TrailerAdapter(mMovie.getTrailers(), getActivity().getApplicationContext());
+            TrailerAdapter trailerAdapter = new TrailerAdapter(mMovie.getTrailers(), getActivity());
             trailerRecyclerView.setAdapter(trailerAdapter);
             trailerAdapter.setOnItemClickListener(new TrailerAdapter.OnItemClickListener() {
 
@@ -117,12 +114,11 @@ public class DetailsFragment extends Fragment {
             RecyclerView reviewRecyclerView = (RecyclerView) v.findViewById(R.id.reviews_recycler);
             if (reviewRecyclerView != null) {
                 reviewRecyclerView.setHasFixedSize(false);
-                RecyclerView.LayoutManager layoutManager =
-                        new LinearLayoutManager(getActivity().getApplicationContext());
+                RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getActivity());
                 reviewRecyclerView.setLayoutManager(layoutManager);
-                reviewRecyclerView.addItemDecoration(
-                        new HorizontalDividerItemDecoration.
-                                Builder(getActivity().getApplicationContext()).
+                reviewRecyclerView.addItemDecoration(new HorizontalDividerItemDecoration.
+                        Builder(getActivity()).
+                        size(5).
                                 build());
                 ReviewAdapter reviewAdapter = new ReviewAdapter(mMovie.getReviews());
                 reviewRecyclerView.setAdapter(reviewAdapter);
