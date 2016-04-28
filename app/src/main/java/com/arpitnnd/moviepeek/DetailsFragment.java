@@ -119,7 +119,7 @@ public class DetailsFragment extends Fragment {
                 reviewRecyclerView.addItemDecoration(new HorizontalDividerItemDecoration.
                         Builder(getActivity()).
                         size(5).
-                                build());
+                        build());
                 ReviewAdapter reviewAdapter = new ReviewAdapter(mMovie.getReviews());
                 reviewRecyclerView.setAdapter(reviewAdapter);
             }
