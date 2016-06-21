@@ -1,9 +1,11 @@
 package com.arpitnnd.moviepeek;
 
 import android.app.Fragment;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
@@ -19,7 +21,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -43,6 +44,8 @@ public class DetailsFragment extends Fragment {
 
     private MovieDetails mMovie;
     private ShareActionProvider mShareActionProvider;
+    private CheckBox mFavCheckBox;
+    private Context context;
 
     public DetailsFragment() {
         // Required empty public constructor
@@ -53,6 +56,7 @@ public class DetailsFragment extends Fragment {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
         mMovie = Parcels.unwrap(getArguments().getParcelable("movie"));
+        context = getActivity().getApplicationContext();
     }
 
     @Override
@@ -77,22 +81,23 @@ public class DetailsFragment extends Fragment {
                 setText(String.format("%.2f", Float.valueOf(mMovie.getVoteAverage())));
         ((TextView) v.findViewById(R.id.overview)).setText(mMovie.getPlot());
 
-        final DBHandler db = new DBHandler(getActivity().getApplicationContext());
-        CheckBox favCheckBox = (CheckBox) v.findViewById(R.id.fav_checkBox);
-        if (db.isFav(mMovie.getMovieId()))
-            favCheckBox.setChecked(true);
-        favCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        mFavCheckBox = (CheckBox) v.findViewById(R.id.fav_checkBox);
+        new DbTask().execute("=");
+        //Use onClick() to avoid CheckedStateChange(caused by above statement) to invoke onCheckedStateChange()
+        mFavCheckBox.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked)
-                    db.addFavMovie(mMovie);
-                else db.deleteFavMovie(mMovie.getMovieId());
+            public void onClick(View v) {
+                String operation;
+                if (mFavCheckBox.isChecked())
+                    operation = "+";
+                else operation = "-";
+                new DbTask().execute(operation);
             }
         });
 
         RecyclerView trailerRecyclerView = (RecyclerView) v.findViewById(R.id.trailers_recycler);
         RecyclerView.LayoutManager llm = new LinearLayoutManager(getActivity(),
-                        LinearLayoutManager.HORIZONTAL, false);
+                LinearLayoutManager.HORIZONTAL, false);
         if (trailerRecyclerView != null) {
             trailerRecyclerView.setHasFixedSize(false);
             trailerRecyclerView.setLayoutManager(llm);
@@ -173,6 +178,29 @@ public class DetailsFragment extends Fragment {
                     trailer.getKey());
             mShareActionProvider.setShareIntent(shareIntent);
         }
+    }
+
+    public class DbTask extends AsyncTask<String, Void, Boolean> {
+
+        @Override
+        protected Boolean doInBackground(String... params) {
+            DBHandler db = new DBHandler(context);
+            if (params[0].equals("="))
+                return db.isFav(mMovie.getMovieId());
+            if (params[0].equals("+"))
+                db.addFavMovie(mMovie);
+            if (params[0].equals("-"))
+                db.deleteFavMovie(mMovie.getMovieId());
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean result) {
+            if (result != null)
+                if (result)
+                    mFavCheckBox.setChecked(true);
+        }
+
     }
 
 }

@@ -1,8 +1,10 @@
 package com.arpitnnd.moviepeek;
 
 import android.app.Fragment;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -33,52 +35,69 @@ public class MainActivity extends AppCompatActivity {
     private GridView mGridView;
     private SharedPreferences mSharedPref;
     private String mSortCriteria;
-    private ArrayList<String> mMovieIds;
-    private Fragment mFragment;
+    private ArrayList<String> mPosterPaths, mMovieIds;
+    private NetworkReceiver mReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mIsTablet = findViewById(R.id.details_frame) != null;
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        mIsTablet = findViewById(R.id.details_frame) != null;
         mSharedPref = getSharedPreferences("prefs", Context.MODE_PRIVATE);
         mApi = new APITools(this);
-        refreshPosters();
-
         mGridView = (GridView) findViewById(R.id.gridView);
+        mPosterPaths = new ArrayList<>();
+        mReceiver = new NetworkReceiver();
+
+        refreshContent();
+
         mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (mIsTablet && getFragmentManager().findFragmentById(R.id.details_frame) != null)
-                    getFragmentManager().beginTransaction().
-                            remove(getFragmentManager().findFragmentById(R.id.details_frame)).
-                            commit();
-                findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
-                new DetailsLoadTask(mSortCriteria, position).execute();
+                loadDetails(position);
             }
         });
-
-        if (savedInstanceState != null) {
-            mGridView.setSelection(savedInstanceState.getInt("GRID_SCROLL_STATE"));
-            if (mIsTablet) {
-                mFragment = getFragmentManager().getFragment(savedInstanceState, "fragment");
-                getFragmentManager().beginTransaction().
-                        replace(R.id.details_frame, mFragment).
-                        commit();
-            }
-        }
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+        outState.putStringArrayList("POSTER_PATHS", mPosterPaths);
         outState.putInt("GRID_SCROLL_STATE", mGridView.getFirstVisiblePosition());
         if (mIsTablet)
-            getFragmentManager().putFragment(outState, "fragment", mFragment);
+            getFragmentManager().putFragment(outState,
+                    "fragment",
+                    getFragmentManager().findFragmentById(R.id.details_frame));
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        mPosterPaths = savedInstanceState.getStringArrayList("POSTER_PATHS");
+        mGridView.setSelection(savedInstanceState.getInt("GRID_SCROLL_STATE"));
+        if (mIsTablet) {
+            getFragmentManager().beginTransaction().
+                    replace(R.id.details_frame,
+                            getFragmentManager().getFragment(savedInstanceState, "fragment")).
+                    commit();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        IntentFilter intentFilter = new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE");
+        this.registerReceiver(mReceiver, intentFilter);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        this.unregisterReceiver(mReceiver);
     }
 
     @Override
@@ -93,9 +112,8 @@ public class MainActivity extends AppCompatActivity {
             case "rat":
                 menu.findItem(R.id.rat).setChecked(true);
                 break;
-            default:
+            case "fav":
                 menu.findItem(R.id.fav).setChecked(true);
-                break;
         }
         return true;
     }
@@ -106,31 +124,44 @@ public class MainActivity extends AppCompatActivity {
 
         if (id == R.id.pop || id == R.id.rat || id == R.id.fav) {
             SharedPreferences.Editor editor = mSharedPref.edit();
-            String criteria;
 
+            String criteria;
             if (id == R.id.pop)
                 criteria = "pop";
             else if (id == R.id.rat)
                 criteria = "rat";
             else criteria = "fav";
-            editor.putString("sort_criteria", criteria);
 
             String temp = mSharedPref.getString("sort_criteria", "pop");
-            editor.apply();
-            if (!(temp.equals(mSharedPref.getString("sort_criteria", "pop")))) {
-                refreshPosters();
+            if (!criteria.equals(temp)) {
+                editor.putString("sort_criteria", criteria);
+                editor.apply();
+                invalidateOptionsMenu();
+                refreshContent();
             }
-            invalidateOptionsMenu();
-        } else if (id == R.id.action_settings) {
-            Toast.makeText(MainActivity.this, "Feature not implemented yet.",
-                    Toast.LENGTH_SHORT).show();
-        }
+        } else if (id == R.id.action_settings)
+            Toast.makeText(MainActivity.this, "Not yet available.", Toast.LENGTH_SHORT).show();
         return super.onOptionsItemSelected(item);
     }
 
-    public void refreshPosters() {
+    public void refreshContent() {
         mSortCriteria = mSharedPref.getString("sort_criteria", "pop");
         new ImageLoadTask().execute(mSortCriteria);
+        //Load first movie's details on tablet if no selection had been made yet
+        if (mIsTablet && (getFragmentManager().findFragmentById(R.id.details_frame) == null)) {
+            findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
+            new DetailsLoadTask(mSortCriteria, 0).execute();
+        }
+    }
+
+    public void loadDetails(int position) {
+        if (mIsTablet && (getFragmentManager().findFragmentById(R.id.details_frame) != null))
+            getFragmentManager().
+                    beginTransaction().
+                    remove(getFragmentManager().findFragmentById(R.id.details_frame)).
+                    commit();
+        findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
+        new DetailsLoadTask(mSortCriteria, position).execute();
     }
 
     public boolean checkNetwork() {
@@ -144,10 +175,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public class ImageLoadTask extends AsyncTask<String, Void, ArrayList<String>> {
+    public class ImageLoadTask extends AsyncTask<String, Void, Void> {
 
         @Override
-        protected ArrayList<String> doInBackground(String... params) {
+        protected Void doInBackground(String... params) {
             ArrayList<String> posterPaths = new ArrayList<>();
 
             if (!params[0].equals("fav")) {
@@ -166,26 +197,25 @@ public class MainActivity extends AppCompatActivity {
                 for (String Id : mMovieIds)
                     posterPaths.add(mDbHandler.fetchPosterPath(Id));
             }
-            return posterPaths;
+            mPosterPaths = posterPaths;
+            return null;
         }
 
         @Override
-        protected void onPostExecute(ArrayList<String> result) {
-            if (result != null) {
-                GridViewAdapter adapter = new GridViewAdapter(getApplicationContext(), result);
-                mGridView.setAdapter(adapter);
-                if (adapter.getCount() == 0)
-                    findViewById(R.id.noItems_textView).setVisibility(View.VISIBLE);
-                else findViewById(R.id.noItems_textView).setVisibility(View.GONE);
-            }
+        protected void onPostExecute(Void aVoid) {
+            GridViewAdapter adapter = new GridViewAdapter(getApplicationContext(), mPosterPaths);
+            mGridView.setAdapter(adapter);
+            if (adapter.getCount() == 0)
+                findViewById(R.id.noItems_textView).setVisibility(View.VISIBLE);
+            else findViewById(R.id.noItems_textView).setVisibility(View.GONE);
         }
 
     }
 
     public class DetailsLoadTask extends AsyncTask<Void, Void, MovieDetails> {
 
-        String sortCriteria;
-        int position;
+        private String sortCriteria;
+        private int position;
 
         public DetailsLoadTask(String sortCriteria, int position) {
             this.sortCriteria = sortCriteria;
@@ -194,7 +224,6 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected MovieDetails doInBackground(Void... params) {
-
             MovieDetails movieDetails = new MovieDetails();
 
             if (!sortCriteria.equals("fav")) {
@@ -205,7 +234,9 @@ public class MainActivity extends AppCompatActivity {
                         e.printStackTrace();
                     }
                 else movieDetails = null;
-            } else movieDetails = mDbHandler.fetchMovieDetails(mMovieIds.get(position));
+            } else if (mMovieIds.size() != 0)
+                movieDetails = mDbHandler.fetchMovieDetails(mMovieIds.get(position));
+            else movieDetails = null;
             return movieDetails;
         }
 
@@ -219,7 +250,6 @@ public class MainActivity extends AppCompatActivity {
                     fragment.setArguments(bundle);
                     getFragmentManager().beginTransaction().replace(R.id.details_frame, fragment).
                             commit();
-                    mFragment = fragment;
                 } else {
                     Intent intent = new Intent(getApplicationContext(), DetailsActivity.class);
                     intent.putExtra("movie", Parcels.wrap(result));
@@ -227,6 +257,16 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
             findViewById(R.id.progressBar).setVisibility(View.GONE);
+        }
+
+    }
+
+    public class NetworkReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (mApi.isNetworkAvailable() && mPosterPaths.size() == 0)
+                refreshContent();
         }
 
     }

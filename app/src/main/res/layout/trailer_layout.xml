@@ -32,7 +32,7 @@
                 android:layout_gravity="center"
                 android:adjustViewBounds="true"
                 android:src="@drawable/ic_play_circle_outline"
-                android:tint="@color/colorAccent" />
+                android:tint="@color/button_material_light" />
 
         </FrameLayout>
 

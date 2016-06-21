@@ -44,7 +44,6 @@ public class GridViewAdapter extends BaseAdapter {
             imageView = new ImageView(mContext);
         else
             imageView = (ImageView) convertView;
-
         imageView.setAdjustViewBounds(true);
         imageView.setScaleType(ImageView.ScaleType.FIT_XY);
         Drawable d = ContextCompat.getDrawable(mContext, R.drawable.loading);

@@ -5,7 +5,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -173,7 +172,6 @@ public class DBHandler extends SQLiteOpenHelper {
 
     public ArrayList<Trailer> parseTrailers(String string) {
         ArrayList<Trailer> trailers = new ArrayList<>();
-        Log.d("string=", string);
         String[] trailersArray = string.split("--");
 
         for (int i = 1; i < trailersArray.length; i++) {
