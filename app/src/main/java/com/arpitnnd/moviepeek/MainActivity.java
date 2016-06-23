@@ -29,7 +29,7 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
-    private boolean mIsTablet;
+    private boolean mIsTablet, mLoadSuccessful;
     private APITools mApi;
     private DBHandler mDbHandler;
     private GridView mGridView;
@@ -64,6 +64,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        IntentFilter intentFilter = new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE");
+        this.registerReceiver(mReceiver, intentFilter);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        this.unregisterReceiver(mReceiver);
+    }
+
+    @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putStringArrayList("POSTER_PATHS", mPosterPaths);
@@ -85,19 +98,6 @@ public class MainActivity extends AppCompatActivity {
                             getFragmentManager().getFragment(savedInstanceState, "fragment")).
                     commit();
         }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        IntentFilter intentFilter = new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE");
-        this.registerReceiver(mReceiver, intentFilter);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        this.unregisterReceiver(mReceiver);
     }
 
     @Override
@@ -197,14 +197,20 @@ public class MainActivity extends AppCompatActivity {
                 for (String Id : mMovieIds)
                     posterPaths.add(mDbHandler.fetchPosterPath(Id));
             }
-            mPosterPaths = posterPaths;
+            if (params[0].equals("fav"))
+                mPosterPaths = posterPaths;
+            else if (posterPaths.size() != 0) {
+                mPosterPaths = posterPaths;
+                mLoadSuccessful = true;
+            } else mLoadSuccessful = false;
             return null;
         }
 
         @Override
         protected void onPostExecute(Void aVoid) {
             GridViewAdapter adapter = new GridViewAdapter(getApplicationContext(), mPosterPaths);
-            mGridView.setAdapter(adapter);
+            if (mLoadSuccessful)
+                mGridView.setAdapter(adapter);
             if (adapter.getCount() == 0)
                 findViewById(R.id.noItems_textView).setVisibility(View.VISIBLE);
             else findViewById(R.id.noItems_textView).setVisibility(View.GONE);
@@ -265,7 +271,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (mApi.isNetworkAvailable() && mPosterPaths.size() == 0)
+            if (mApi.isNetworkAvailable() && !mLoadSuccessful)
                 refreshContent();
         }
 

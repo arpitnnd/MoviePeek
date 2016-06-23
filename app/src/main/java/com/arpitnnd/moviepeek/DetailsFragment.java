@@ -95,25 +95,27 @@ public class DetailsFragment extends Fragment {
             }
         });
 
-        RecyclerView trailerRecyclerView = (RecyclerView) v.findViewById(R.id.trailers_recycler);
-        RecyclerView.LayoutManager llm = new LinearLayoutManager(getActivity(),
-                LinearLayoutManager.HORIZONTAL, false);
-        if (trailerRecyclerView != null) {
-            trailerRecyclerView.setHasFixedSize(false);
-            trailerRecyclerView.setLayoutManager(llm);
-            TrailerAdapter trailerAdapter = new TrailerAdapter(mMovie.getTrailers(), getActivity());
-            trailerRecyclerView.setAdapter(trailerAdapter);
-            trailerAdapter.setOnItemClickListener(new TrailerAdapter.OnItemClickListener() {
+        if (mMovie.getTrailers().size() != 0) {
+            RecyclerView trailerRecyclerView = (RecyclerView) v.findViewById(R.id.trailers_recycler);
+            RecyclerView.LayoutManager llm = new LinearLayoutManager(getActivity(),
+                    LinearLayoutManager.HORIZONTAL, false);
+            if (trailerRecyclerView != null) {
+                trailerRecyclerView.setHasFixedSize(false);
+                trailerRecyclerView.setLayoutManager(llm);
+                TrailerAdapter trailerAdapter = new TrailerAdapter(mMovie.getTrailers(), getActivity());
+                trailerRecyclerView.setAdapter(trailerAdapter);
+                trailerAdapter.setOnItemClickListener(new TrailerAdapter.OnItemClickListener() {
 
-                @Override
-                public void onItemClick(View view, int position) {
-                    Intent yIntent = new Intent(Intent.ACTION_VIEW);
-                    yIntent.setData(Uri.parse("https://www.youtube.com/watch?v="
-                            + mMovie.getTrailers().get(position).getKey()));
-                    startActivity(yIntent);
-                }
-            });
-        }
+                    @Override
+                    public void onItemClick(View view, int position) {
+                        Intent yIntent = new Intent(Intent.ACTION_VIEW);
+                        yIntent.setData(Uri.parse("https://www.youtube.com/watch?v="
+                                + mMovie.getTrailers().get(position).getKey()));
+                        startActivity(yIntent);
+                    }
+                });
+            }
+        } else v.findViewById(R.id.noTrailers_textView).setVisibility(View.VISIBLE);
 
         if (mMovie.getReviews().size() != 0) {
             RecyclerView reviewRecyclerView = (RecyclerView) v.findViewById(R.id.reviews_recycler);
@@ -162,7 +164,8 @@ public class DetailsFragment extends Fragment {
         inflater.inflate(R.menu.menu_details, menu);
         MenuItem item = menu.findItem(R.id.action_share);
         mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
-        setShareIntent(mMovie.getTrailers().get(0));
+        if (mMovie.getTrailers().size() != 0)
+            setShareIntent(mMovie.getTrailers().get(0));
         super.onCreateOptionsMenu(menu, inflater);
     }
 
