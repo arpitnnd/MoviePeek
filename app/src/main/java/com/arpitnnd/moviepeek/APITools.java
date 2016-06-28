@@ -23,11 +23,6 @@ import java.util.ArrayList;
 public class APITools {
 
     private static String API_KEY = BuildConfig.API_KEY;
-    private Context context;
-
-    APITools(Context context) {
-        this.context = context;
-    }
 
     public ArrayList<String> getPosterPaths(boolean sortByPop) throws JSONException {
         String moviesJSON = getMoviesJSON(sortByPop);
@@ -88,7 +83,7 @@ public class APITools {
         return reviews;
     }
 
-    public boolean isNetworkAvailable() {
+    public boolean isNetworkAvailable(Context context) {
         ConnectivityManager connectivityManager =
                 (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();

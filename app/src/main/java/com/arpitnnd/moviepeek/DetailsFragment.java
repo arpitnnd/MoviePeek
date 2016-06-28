@@ -1,7 +1,6 @@
 package com.arpitnnd.moviepeek;
 
 import android.app.Fragment;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -46,7 +45,6 @@ public class DetailsFragment extends Fragment {
     private MovieDetails mMovie;
     private ShareActionProvider mShareActionProvider;
     private CheckBox mFavCheckBox;
-    private Context context;
 
     public DetailsFragment() {
         // Required empty public constructor
@@ -57,7 +55,6 @@ public class DetailsFragment extends Fragment {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
         mMovie = Parcels.unwrap(getArguments().getParcelable("movie"));
-        context = getActivity().getApplicationContext();
     }
 
     @Override
@@ -193,7 +190,7 @@ public class DetailsFragment extends Fragment {
 
         @Override
         protected Boolean doInBackground(String... params) {
-            DBHandler db = new DBHandler(context);
+            DBHandler db = new DBHandler(getActivity().getApplicationContext());
             if (params[0].equals("="))
                 return db.isFav(mMovie.getMovieId());
             if (params[0].equals("+"))

@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
 
         mIsTablet = findViewById(R.id.details_frame) != null;
         mSharedPref = getSharedPreferences("prefs", Context.MODE_PRIVATE);
-        mApi = new APITools(this);
+        mApi = new APITools();
         mGridView = (GridView) findViewById(R.id.gridView);
         //mReceiver = new NetworkReceiver();
 
@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
             if (savedInstanceState.getBoolean("SNACKBAR_VISIBLE"))
                 showOfflineSnackbar();
             if (mPosterPaths != null) {
-                GridViewAdapter adapter = new GridViewAdapter(getApplicationContext(), mPosterPaths);
+                GridViewAdapter adapter = new GridViewAdapter(this, mPosterPaths);
                 mGridView.setAdapter(adapter);
                 mGridView.setSelection(savedInstanceState.getInt("GRID_SCROLL_STATE"));
                 if (mIsTablet) {
@@ -149,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void refreshContent() {
         mSortCriteria = mSharedPref.getString("sort_criteria", "pop");
-        if (mApi.isNetworkAvailable() || mSortCriteria.equals("fav")) {
+        if (mApi.isNetworkAvailable(this) || mSortCriteria.equals("fav")) {
             new ImageLoadTask().execute(mSortCriteria);
             //Load first movie's details on tablet if no selection had been made yet
             if (mIsTablet && (getFragmentManager().findFragmentById(R.id.details_frame) == null)) {
@@ -173,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void loadDetails(final int position) {
-        if (mApi.isNetworkAvailable() || mSortCriteria.equals("fav")) {
+        if (mApi.isNetworkAvailable(this) || mSortCriteria.equals("fav")) {
             if (mIsTablet && (getFragmentManager().findFragmentById(R.id.details_frame) != null))
                 getFragmentManager().
                         beginTransaction().
@@ -194,7 +194,7 @@ public class MainActivity extends AppCompatActivity {
             ArrayList<String> posterPaths = new ArrayList<>();
 
             if (!params[0].equals("fav")) {
-                if (mApi.isNetworkAvailable()) {
+                if (mApi.isNetworkAvailable(MainActivity.this)) {
                     boolean sortByPopularity = params[0].equals("pop");
                     try {
                         posterPaths = mApi.getPosterPaths(sortByPopularity);
@@ -218,7 +218,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Void aVoid) {
-            GridViewAdapter adapter = new GridViewAdapter(getApplicationContext(), mPosterPaths);
+            GridViewAdapter adapter = new GridViewAdapter(MainActivity.this, mPosterPaths);
             mGridView.setAdapter(adapter);
             if (adapter.getCount() == 0)
                 findViewById(R.id.noItems_textView).setVisibility(View.VISIBLE);
@@ -242,7 +242,7 @@ public class MainActivity extends AppCompatActivity {
             MovieDetails movieDetails = new MovieDetails();
 
             if (!sortCriteria.equals("fav")) {
-                if (mApi.isNetworkAvailable())
+                if (mApi.isNetworkAvailable(MainActivity.this))
                     try {
                         movieDetails = mApi.getMovieDetails(sortCriteria.equals("pop"), position);
                     } catch (JSONException e) {
@@ -266,7 +266,7 @@ public class MainActivity extends AppCompatActivity {
                     getFragmentManager().beginTransaction().replace(R.id.details_frame, fragment).
                             commit();
                 } else {
-                    Intent intent = new Intent(getApplicationContext(), DetailsActivity.class);
+                    Intent intent = new Intent(MainActivity.this, DetailsActivity.class);
                     intent.putExtra("movie", Parcels.wrap(result));
                     startActivity(intent);
                 }
