@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.NestedScrollView;
@@ -111,7 +112,12 @@ public class DetailsFragment extends Fragment {
                         Intent yIntent = new Intent(Intent.ACTION_VIEW);
                         yIntent.setData(Uri.parse("https://www.youtube.com/watch?v="
                                 + mMovie.getTrailers().get(position).getKey()));
-                        startActivity(yIntent);
+                        if (yIntent.resolveActivity(getActivity().getPackageManager()) != null)
+                            startActivity(yIntent);
+                        else Snackbar.make(getView().findViewById(R.id.parent_scrollView),
+                                R.string.no_browser_message,
+                                Snackbar.LENGTH_LONG).
+                                show();
                     }
                 });
             }

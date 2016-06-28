@@ -15,4 +15,6 @@
     <string name="most_popular">Most Popular</string>
     <string name="highest_rated">Highest Rated</string>
     <string name="favourites">Favourites</string>
+    <string name="offline_message">"Oops. You are not connected.    :("</string>
+    <string name="no_browser_message">Please install a web browser or Youtube app and retry.</string>
 </resources>

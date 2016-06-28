@@ -1,10 +1,8 @@
 package com.arpitnnd.moviepeek;
 
 import android.app.Fragment;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -29,14 +27,14 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
-    private boolean mIsTablet, mLoadSuccessful;
+    private boolean mIsTablet, mSnackbarShown;
     private APITools mApi;
     private DBHandler mDbHandler;
     private GridView mGridView;
     private SharedPreferences mSharedPref;
     private String mSortCriteria;
     private ArrayList<String> mPosterPaths, mMovieIds;
-    private NetworkReceiver mReceiver;
+    //private NetworkReceiver mReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,10 +48,7 @@ public class MainActivity extends AppCompatActivity {
         mSharedPref = getSharedPreferences("prefs", Context.MODE_PRIVATE);
         mApi = new APITools(this);
         mGridView = (GridView) findViewById(R.id.gridView);
-        mPosterPaths = new ArrayList<>();
-        mReceiver = new NetworkReceiver();
-
-        refreshContent();
+        //mReceiver = new NetworkReceiver();
 
         mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -61,9 +56,28 @@ public class MainActivity extends AppCompatActivity {
                 loadDetails(position);
             }
         });
+
+        if (savedInstanceState != null) {
+            mSortCriteria = savedInstanceState.getString("SORT_CRITERIA");
+            mPosterPaths = savedInstanceState.getStringArrayList("POSTER_PATHS");
+            if (savedInstanceState.getBoolean("SNACKBAR_VISIBLE"))
+                showOfflineSnackbar();
+            if (mPosterPaths != null) {
+                GridViewAdapter adapter = new GridViewAdapter(getApplicationContext(), mPosterPaths);
+                mGridView.setAdapter(adapter);
+                mGridView.setSelection(savedInstanceState.getInt("GRID_SCROLL_STATE"));
+                if (mIsTablet) {
+                    getFragmentManager().beginTransaction().
+                            replace(R.id.details_frame,
+                                    getFragmentManager().
+                                            getFragment(savedInstanceState, "DETAILS_FRAGMENT")).
+                            commit();
+                }
+            }
+        } else refreshContent();
     }
 
-    @Override
+    /*@Override
     protected void onResume() {
         super.onResume();
         IntentFilter intentFilter = new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE");
@@ -74,30 +88,19 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         this.unregisterReceiver(mReceiver);
-    }
+    }*/
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+        outState.putString("SORT_CRITERIA", mSortCriteria);
         outState.putStringArrayList("POSTER_PATHS", mPosterPaths);
         outState.putInt("GRID_SCROLL_STATE", mGridView.getFirstVisiblePosition());
-        if (mIsTablet)
+        outState.putBoolean("SNACKBAR_VISIBLE", mSnackbarShown);
+        if (mIsTablet && getFragmentManager().findFragmentById(R.id.details_frame) != null)
             getFragmentManager().putFragment(outState,
-                    "fragment",
+                    "DETAILS_FRAGMENT",
                     getFragmentManager().findFragmentById(R.id.details_frame));
-    }
-
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        mPosterPaths = savedInstanceState.getStringArrayList("POSTER_PATHS");
-        mGridView.setSelection(savedInstanceState.getInt("GRID_SCROLL_STATE"));
-        if (mIsTablet) {
-            getFragmentManager().beginTransaction().
-                    replace(R.id.details_frame,
-                            getFragmentManager().getFragment(savedInstanceState, "fragment")).
-                    commit();
-        }
     }
 
     @Override
@@ -140,39 +143,48 @@ public class MainActivity extends AppCompatActivity {
                 refreshContent();
             }
         } else if (id == R.id.action_settings)
-            Toast.makeText(MainActivity.this, "Not yet available.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.this, "Coming soon.", Toast.LENGTH_SHORT).show();
         return super.onOptionsItemSelected(item);
     }
 
     public void refreshContent() {
         mSortCriteria = mSharedPref.getString("sort_criteria", "pop");
-        new ImageLoadTask().execute(mSortCriteria);
-        //Load first movie's details on tablet if no selection had been made yet
-        if (mIsTablet && (getFragmentManager().findFragmentById(R.id.details_frame) == null)) {
+        if (mApi.isNetworkAvailable() || mSortCriteria.equals("fav")) {
+            new ImageLoadTask().execute(mSortCriteria);
+            //Load first movie's details on tablet if no selection had been made yet
+            if (mIsTablet && (getFragmentManager().findFragmentById(R.id.details_frame) == null)) {
+                findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
+                new DetailsLoadTask(mSortCriteria, 0).execute();
+            }
+        } else showOfflineSnackbar();
+    }
+
+    public void showOfflineSnackbar() {
+        Snackbar.make(findViewById(R.id.coordinatorLayout),
+                R.string.offline_message,
+                Snackbar.LENGTH_INDEFINITE).setAction("RETRY", new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mSnackbarShown = false;
+                refreshContent();
+            }
+        }).show();
+        mSnackbarShown = true;
+    }
+
+    public void loadDetails(final int position) {
+        if (mApi.isNetworkAvailable() || mSortCriteria.equals("fav")) {
+            if (mIsTablet && (getFragmentManager().findFragmentById(R.id.details_frame) != null))
+                getFragmentManager().
+                        beginTransaction().
+                        remove(getFragmentManager().findFragmentById(R.id.details_frame)).
+                        commit();
             findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
-            new DetailsLoadTask(mSortCriteria, 0).execute();
-        }
-    }
-
-    public void loadDetails(int position) {
-        if (mIsTablet && (getFragmentManager().findFragmentById(R.id.details_frame) != null))
-            getFragmentManager().
-                    beginTransaction().
-                    remove(getFragmentManager().findFragmentById(R.id.details_frame)).
-                    commit();
-        findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
-        new DetailsLoadTask(mSortCriteria, position).execute();
-    }
-
-    public boolean checkNetwork() {
-        if (mApi.isNetworkAvailable())
-            return true;
-        else {
-            Snackbar.make(findViewById(R.id.coordinatorLayout),
-                    "No internet access.",
-                    Snackbar.LENGTH_LONG).show();
-            return false;
-        }
+            new DetailsLoadTask(mSortCriteria, position).execute();
+        } else Snackbar.make(findViewById(R.id.coordinatorLayout),
+                R.string.offline_message,
+                Snackbar.LENGTH_LONG).
+                show();
     }
 
     public class ImageLoadTask extends AsyncTask<String, Void, Void> {
@@ -182,7 +194,7 @@ public class MainActivity extends AppCompatActivity {
             ArrayList<String> posterPaths = new ArrayList<>();
 
             if (!params[0].equals("fav")) {
-                if (checkNetwork()) {
+                if (mApi.isNetworkAvailable()) {
                     boolean sortByPopularity = params[0].equals("pop");
                     try {
                         posterPaths = mApi.getPosterPaths(sortByPopularity);
@@ -199,18 +211,15 @@ public class MainActivity extends AppCompatActivity {
             }
             if (params[0].equals("fav"))
                 mPosterPaths = posterPaths;
-            else if (posterPaths.size() != 0) {
+            else if (posterPaths.size() != 0)
                 mPosterPaths = posterPaths;
-                mLoadSuccessful = true;
-            } else mLoadSuccessful = false;
             return null;
         }
 
         @Override
         protected void onPostExecute(Void aVoid) {
             GridViewAdapter adapter = new GridViewAdapter(getApplicationContext(), mPosterPaths);
-            if (mLoadSuccessful)
-                mGridView.setAdapter(adapter);
+            mGridView.setAdapter(adapter);
             if (adapter.getCount() == 0)
                 findViewById(R.id.noItems_textView).setVisibility(View.VISIBLE);
             else findViewById(R.id.noItems_textView).setVisibility(View.GONE);
@@ -233,7 +242,7 @@ public class MainActivity extends AppCompatActivity {
             MovieDetails movieDetails = new MovieDetails();
 
             if (!sortCriteria.equals("fav")) {
-                if (checkNetwork())
+                if (mApi.isNetworkAvailable())
                     try {
                         movieDetails = mApi.getMovieDetails(sortCriteria.equals("pop"), position);
                     } catch (JSONException e) {
@@ -267,14 +276,14 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public class NetworkReceiver extends BroadcastReceiver {
+    /*public class NetworkReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (mApi.isNetworkAvailable() && !mLoadSuccessful)
+            if ((mApi.isNetworkAvailable() && mPosterPaths.size() == 0) || !mLoadSuccessful)
                 refreshContent();
         }
 
-    }
+    }*/
 
 }
