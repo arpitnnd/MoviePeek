@@ -149,14 +149,9 @@ public class MainActivity extends AppCompatActivity {
 
     public void refreshContent() {
         mSortCriteria = mSharedPref.getString("sort_criteria", "pop");
-        if (mApi.isNetworkAvailable(this) || mSortCriteria.equals("fav")) {
-            new ImageLoadTask().execute(mSortCriteria);
-            //Load first movie's details on tablet if no selection had been made yet
-            if (mIsTablet && (getFragmentManager().findFragmentById(R.id.details_frame) == null)) {
-                findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
-                new DetailsLoadTask(mSortCriteria, 0).execute();
-            }
-        } else showOfflineSnackbar();
+        if (mApi.isNetworkAvailable(this) || mSortCriteria.equals("fav"))
+            new ImageLoadTask().execute(mSortCriteria); // This also loads first movie's details on tablet devices
+        else showOfflineSnackbar();
     }
 
     public void showOfflineSnackbar() {
@@ -222,7 +217,14 @@ public class MainActivity extends AppCompatActivity {
             mGridView.setAdapter(adapter);
             if (adapter.getCount() == 0)
                 findViewById(R.id.noItems_textView).setVisibility(View.VISIBLE);
-            else findViewById(R.id.noItems_textView).setVisibility(View.GONE);
+            else {
+                findViewById(R.id.noItems_textView).setVisibility(View.GONE);
+                //Load first movie's details on tablet if no selection had been made yet
+                if (mIsTablet && (getFragmentManager().findFragmentById(R.id.details_frame) == null)) {
+                    findViewById(R.id.progressBar).setVisibility(View.VISIBLE);
+                    new DetailsLoadTask(mSortCriteria, 0).execute();
+                }
+            }
         }
 
     }

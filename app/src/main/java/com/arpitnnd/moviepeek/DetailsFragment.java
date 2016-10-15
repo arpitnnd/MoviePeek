@@ -22,7 +22,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ImageView;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.arpitnnd.moviepeek.adapters.ReviewAdapter;
@@ -124,7 +123,13 @@ public class DetailsFragment extends Fragment {
             RecyclerView reviewRecyclerView = (RecyclerView) v.findViewById(R.id.reviews_recycler);
             if (reviewRecyclerView != null) {
                 reviewRecyclerView.setHasFixedSize(false);
-                RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getActivity());
+                RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getActivity()) {
+                    @Override
+                    // This will avoid RecyclerView from interfering with it's parent ScrollView
+                    public boolean canScrollVertically() {
+                        return false;
+                    }
+                };
                 reviewRecyclerView.setLayoutManager(layoutManager);
                 reviewRecyclerView.addItemDecoration(new HorizontalDividerItemDecoration.
                         Builder(getActivity()).
@@ -141,11 +146,8 @@ public class DetailsFragment extends Fragment {
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         NestedScrollView parent = (NestedScrollView) getView().findViewById(R.id.parent_scrollView);
-        ScrollView child = (ScrollView) getView().findViewById(R.id.child_scrollView);
         outState.putIntArray("DETAILS_PARENT_SCROLL_STATE",
                 new int[]{parent.getScrollX(), parent.getScrollY()});
-        outState.putIntArray("DETAILS_CHILD_SCROLL_STATE",
-                new int[]{child.getScrollX(), child.getScrollY()});
     }
 
     @Override
@@ -155,10 +157,8 @@ public class DetailsFragment extends Fragment {
             final int[] parentPosition = savedInstanceState.getIntArray("DETAILS_PARENT_SCROLL_STATE");
             final int[] childPosition = savedInstanceState.getIntArray("DETAILS_CHILD_SCROLL_STATE");
             NestedScrollView parent = (NestedScrollView) getView().findViewById(R.id.parent_scrollView);
-            ScrollView child = (ScrollView) getView().findViewById(R.id.child_scrollView);
 
             parent.scrollTo(parentPosition[0], parentPosition[1]);
-            child.scrollTo(childPosition[0], childPosition[1]);
         }
     }
 
