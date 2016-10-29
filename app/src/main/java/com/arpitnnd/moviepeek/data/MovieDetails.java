@@ -7,9 +7,9 @@ import java.util.ArrayList;
 @Parcel
 public class MovieDetails {
 
-    public String movieId, movieTitle, releaseDate, posterPath, backdropPath, voteAverage, plot;
-    public ArrayList<Trailer> trailers;
-    public ArrayList<Review> reviews;
+    private String movieId, movieTitle, releaseDate, posterPath, backdropPath, voteAverage, plot;
+    private ArrayList<Trailer> trailers;
+    private ArrayList<Review> reviews;
 
     public String getMovieId() {
         return movieId;

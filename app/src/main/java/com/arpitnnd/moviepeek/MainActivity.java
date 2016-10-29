@@ -234,7 +234,7 @@ public class MainActivity extends AppCompatActivity {
         private String sortCriteria;
         private int position;
 
-        public DetailsLoadTask(String sortCriteria, int position) {
+        DetailsLoadTask(String sortCriteria, int position) {
             this.sortCriteria = sortCriteria;
             this.position = position;
         }

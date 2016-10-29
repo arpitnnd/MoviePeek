@@ -59,11 +59,11 @@ public class TrailerAdapter extends RecyclerView.Adapter<TrailerAdapter.ViewHold
         void onItemClick(View view, int position);
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        public TextView mTextViewTitle;
-        public ImageView mImageViewThumbnail;
+    class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+        TextView mTextViewTitle;
+        ImageView mImageViewThumbnail;
 
-        public ViewHolder(View v) {
+        ViewHolder(View v) {
             super(v);
             mImageViewThumbnail = (ImageView) v.findViewById(R.id.video_thumbnail);
             mTextViewTitle = (TextView) v.findViewById(R.id.video_title);

@@ -20,11 +20,11 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 
-public class APITools {
+class APITools {
 
     private static String API_KEY = BuildConfig.API_KEY;
 
-    public ArrayList<String> getPosterPaths(boolean sortByPop) throws JSONException {
+    ArrayList<String> getPosterPaths(boolean sortByPop) throws JSONException {
         String moviesJSON = getMoviesJSON(sortByPop);
         JSONArray moviesArray = new JSONObject(moviesJSON).getJSONArray("results");
         ArrayList<String> posterPaths = new ArrayList<>();
@@ -34,7 +34,7 @@ public class APITools {
         return posterPaths;
     }
 
-    public MovieDetails getMovieDetails(boolean sortByPop, int position) throws JSONException {
+    MovieDetails getMovieDetails(boolean sortByPop, int position) throws JSONException {
         String moviesJSON = getMoviesJSON(sortByPop);
         JSONArray moviesArray = new JSONObject(moviesJSON).getJSONArray("results");
         MovieDetails movie = new MovieDetails();
@@ -51,7 +51,7 @@ public class APITools {
         return movie;
     }
 
-    public ArrayList<Trailer> getTrailers(String id) throws JSONException {
+    ArrayList<Trailer> getTrailers(String id) throws JSONException {
         JSONArray trailerArray = new JSONObject(getJSON(
                 "http://api.themoviedb.org/3/movie/" + id + "/videos?api_key=" + API_KEY))
                 .getJSONArray("results");
@@ -68,7 +68,7 @@ public class APITools {
         return trailers;
     }
 
-    public ArrayList<Review> getReviews(String id) throws JSONException {
+    private ArrayList<Review> getReviews(String id) throws JSONException {
         JSONArray reviewArray = new JSONObject(getJSON(
                 "http://api.themoviedb.org/3/movie/" + id + "/reviews?api_key=" + API_KEY))
                 .getJSONArray("results");
@@ -83,14 +83,14 @@ public class APITools {
         return reviews;
     }
 
-    public boolean isNetworkAvailable(Context context) {
+    boolean isNetworkAvailable(Context context) {
         ConnectivityManager connectivityManager =
                 (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
-    public String getMoviesJSON(boolean sortByPop) {
+    private String getMoviesJSON(boolean sortByPop) {
         String urlString;
         if (sortByPop) {
             urlString = "http://api.themoviedb.org/3/movie/popular?api_key=" + API_KEY;
@@ -100,7 +100,7 @@ public class APITools {
         return getJSON(urlString);
     }
 
-    public String getJSON(String urlString) {
+    String getJSON(String urlString) {
         HttpURLConnection urlConnection = null;
         BufferedReader reader = null;
         StringBuilder buffer = new StringBuilder();
